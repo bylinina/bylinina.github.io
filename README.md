@@ -9,4 +9,4 @@ Before, I worked at Leiden University Centre for Linguistics, leading my NWO VEN
 - I presented my recent joint work with Alexey Tikhonov on artificial language learning applied to multilingual pre-trained language models at ILFC Seminar (CNRS, Paris) and at the `Jabberwocky Words in Linguistics' workshop (UniBuc & UMass Amherst).
 - Two large-scale COVID-related psychology studies I contributed to a bit are ready: [one](https://www.nature.com/articles/s41562-021-01173-x) published at _Nature Human Behaviour_, [one more](https://doi.org/10.31234/osf.io/n3dyf) accepted to _PNAS_.
 - The video of my keynote at _Sinn und Bedeutung 25_ (Sept 2020) is available online: "[Existence and Plurality](https://osf.io/k97bz/)".
-- My paper with Rick Nouwen on numeral semantics is out in _Language and Linguistics Compass_: "[Numeral semantics]"(https://onlinelibrary.wiley.com/doi/full/10.1111/lnc3.12390).
+- My paper with Rick Nouwen on numeral semantics is out in _Language and Linguistics Compass_: "[Numeral semantics](https://onlinelibrary.wiley.com/doi/full/10.1111/lnc3.12390)".
