@@ -2,4 +2,10 @@ theme: jekyll-theme-minimal
 title: Lisa Bylinina
 description: linguist
 github:
-is\_project\_page:false
+  is_project_page: false
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      author_profile: true
