@@ -5,7 +5,8 @@ Before, I worked at Leiden University Centre for Linguistics, leading my NWO VEN
 
 ## News
 
-
+- The video of my keynote at Sinn und Bedeutung 25 (Sept 2020) is available online: "[Existence and Plurality](https://osf.io/k97bz/)"
+- My paper with Rick Nouwen on numeral semantics is out in _Language and Linguistics Compass_: [Numeral semantics](https://onlinelibrary.wiley.com/doi/full/10.1111/lnc3.12390)
 
 ```markdown
 Syntax highlighted code block
