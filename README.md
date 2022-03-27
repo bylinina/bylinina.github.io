@@ -5,27 +5,6 @@ Before, I worked at Leiden University Centre for Linguistics, leading my NWO VEN
 
 ## News
 
-- The video of my keynote at Sinn und Bedeutung 25 (Sept 2020) is available online: "[Existence and Plurality](https://osf.io/k97bz/)"
-- My paper with Rick Nouwen on numeral semantics is out in _Language and Linguistics Compass_: [Numeral semantics](https://onlinelibrary.wiley.com/doi/full/10.1111/lnc3.12390)
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-
+- My paper with Alexey Tikhonov has been accepted to ACL 2022 main conference! Here is the pre-print: "[Transformers in the loop: Polarity in neural models of language]"(https://arxiv.org/abs/2109.03926)
+- The video of my keynote at _Sinn und Bedeutung 25_ (Sept 2020) is available online: "[Existence and Plurality](https://osf.io/k97bz/)".
+- My paper with Rick Nouwen on numeral semantics is out in _Language and Linguistics Compass_: "[Numeral semantics]"(https://onlinelibrary.wiley.com/doi/full/10.1111/lnc3.12390).
