@@ -1,11 +1,7 @@
-theme: jekyll-theme-minimal
 title: Lisa Bylinina
+show_downloads: true
+logo: https://avatars.githubusercontent.com/u/53174684?v=4
 description: linguist
 github:
   is_project_page: false
-defaults:
-  - scope:
-      path: ""
-      type: posts
-    values:
-      author_profile: true
+theme: jekyll-theme-minimal
