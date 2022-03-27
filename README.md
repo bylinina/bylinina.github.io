@@ -1,4 +1,9 @@
-## Welcome to GitHub Pages
+I am a linguist, interested both in theoretical linguistics and in natural language processing. I am currently an NLP / ML engineer at Bookarang, Amsterdam.
+
+Before, I worked at Leiden University Centre for Linguistics, leading my NWO VENI project called Number Words. In 2013-2016, I was a postdoc at the Meertens Institute, Amsterdam, working on cross-linguistic variation in morphosyntax of numerals. My dissertation entitled The Grammar of Standards [pdf] was written in Utrecht Institute for Linguistics OTS and defended in February 2014.
+
+
+## Selected recent output
 
 You can use the [editor on GitHub](https://github.com/bylinina/bylinina.github.io/edit/main/README.md) to maintain and preview the content for your website in Markdown files.
 
