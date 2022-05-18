@@ -6,7 +6,7 @@ Before, I worked at Leiden University Centre for Linguistics, leading my NWO VEN
 
 ## News
 
-- My paper with Alexey Tikhonov has been accepted to _ACL 2022_ main conference! Here is the pre-print: "[Transformers in the loop: Polarity in neural models of language](https://arxiv.org/abs/2109.03926)".
+- My paper with Alexey Tikhonov has been accepted to _ACL 2022_ main conference! Here it is: "[Transformers in the loop: Polarity in neural models of language](https://aclanthology.org/2022.acl-long.455/)".
 - On the 14th June 2022, I will present my recent work at the [Computational Linguistics Seminar](http://projects.illc.uva.nl/LaCo/CLS/), ILLC, University of Amsterdam.
 - Lasha Abzianidze, Denis Paperno and I are working on an overview paper "Semantics and deep learning" for _Cambridge Elements in Semantics_.
 - I presented my recent joint work with Alexey Tikhonov on artificial language learning applied to multilingual pre-trained language models at [ILFC Seminar](https://gdr-lift.loria.fr/monthy-online-ilfc-seminar/) (CNRS, Paris) and at the "[Jabberwocky Words in Linguistics](https://www.umass.edu/languageacquisition/jabberwocky-words-linguistics-workshop-feb-11-12-umass-unibuc)" workshop (UniBuc & UMass Amherst).
