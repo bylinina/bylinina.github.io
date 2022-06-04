@@ -6,6 +6,7 @@ Before, I worked at Leiden University Centre for Linguistics, leading my NWO VEN
 
 ## News
 
+-  Paper on polarity in multilingual models accepted to CogSci2022, preprint on lingubuzz: "[The driving forces of polarity-sensitivity: Experiments with multilingual pre-trained neural language models](https://lingbuzz.net/lingbuzz/006641)"
 - My paper with Alexey Tikhonov has been accepted to _ACL 2022_ main conference! Here it is: "[Transformers in the loop: Polarity in neural models of language](https://aclanthology.org/2022.acl-long.455/)".
 - On the 14th June 2022, I will present my recent work at the [Computational Linguistics Seminar](http://projects.illc.uva.nl/LaCo/CLS/), ILLC, University of Amsterdam.
 - Lasha Abzianidze, Denis Paperno and I are working on an overview paper "Semantics and deep learning" for _Cambridge Elements in Semantics_.
