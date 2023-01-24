@@ -1,4 +1,4 @@
-I am a linguist, interested both in theoretical linguistics and in natural language processing. I am currently an Assistant Professor at the University of Groningen, Center for Language and Cognition (CLCG), Computational Linguistics Group.
+I am a linguist, interested both in theoretical linguistics and in natural language processing. I am currently an Assistant Professor at the University of Groningen, Center for Language and Cognition (CLCG), [Computational Linguistics Group](https://www.rug.nl/research/clcg/research/cl/).
 
 Before, I was an NLP / ML engineer at [Bookarang](https://www.bookarang.com/en/), Amsterdam. Prior to that, I worked at Leiden University Centre for Linguistics, leading my NWO VENI project called Number Words. In 2013-2016, I was a postdoc at the Meertens Institute, Amsterdam, working on cross-linguistic variation in morphosyntax of numerals. My dissertation entitled The Grammar of Standards [[pdf]](http://dspace.library.uu.nl/bitstream/handle/1874/296572/bylinina.pdf) was written in Utrecht Institute for Linguistics OTS and defended in 2014.
 
