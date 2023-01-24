@@ -1,11 +1,12 @@
-I am a linguist, interested both in theoretical linguistics and in natural language processing. I am currently an NLP / ML engineer at [Bookarang](https://www.bookarang.com/en/), Amsterdam.
+I am a linguist, interested both in theoretical linguistics and in natural language processing. I am currently an Assistant Professor at the University of Groningen, Center for Language and Cognition (CLCG), Computational Linguistics Group.
 
-Before, I worked at Leiden University Centre for Linguistics, leading my NWO VENI project called Number Words. In 2013-2016, I was a postdoc at the Meertens Institute, Amsterdam, working on cross-linguistic variation in morphosyntax of numerals. My dissertation entitled The Grammar of Standards [[pdf]](http://dspace.library.uu.nl/bitstream/handle/1874/296572/bylinina.pdf) was written in Utrecht Institute for Linguistics OTS and defended in 2014.
+Before, I was an NLP / ML engineer at [Bookarang](https://www.bookarang.com/en/), Amsterdam. Prior to that, I worked at Leiden University Centre for Linguistics, leading my NWO VENI project called Number Words. In 2013-2016, I was a postdoc at the Meertens Institute, Amsterdam, working on cross-linguistic variation in morphosyntax of numerals. My dissertation entitled The Grammar of Standards [[pdf]](http://dspace.library.uu.nl/bitstream/handle/1874/296572/bylinina.pdf) was written in Utrecht Institute for Linguistics OTS and defended in 2014.
 
 
 
 ## News
 
+- I joined the CompLing group in Groningen as Assistant Professor! Starting 1 Dec 2022.
 -  Paper on polarity in multilingual models accepted to CogSci2022: "[The driving forces of polarity-sensitivity: Experiments with multilingual pre-trained neural language models](https://escholarship.org/uc/item/9xj2t25t)".
 - My paper with Alexey Tikhonov has been accepted to _ACL 2022_ main conference! Here it is: "[Transformers in the loop: Polarity in neural models of language](https://aclanthology.org/2022.acl-long.455/)".
 - On the 14th June 2022, I will present my recent work at the [Computational Linguistics Seminar](http://projects.illc.uva.nl/LaCo/CLS/), ILLC, University of Amsterdam.
