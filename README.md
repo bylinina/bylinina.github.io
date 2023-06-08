@@ -6,7 +6,7 @@ Before, I was an NLP / ML engineer at [Bookarang](https://www.bookarang.com/en/)
 
 ## News
 
-- Joint work with Alexei Tikhonov and Denis Paperno on multimodal word representations accepted to \*_SEM_ 2023 [preprint](https://arxiv.org/abs/2306.02348).
+- Joint work with Alexei Tikhonov and Denis Paperno on multimodal word representations accepted to \*_SEM_ 2023 [[preprint]](https://arxiv.org/abs/2306.02348).
 - I joined the CompLing group in Groningen as Assistant Professor! Starting 1 Dec 2022.
 - Paper on polarity in multilingual models accepted to CogSci2022: "[The driving forces of polarity-sensitivity: Experiments with multilingual pre-trained neural language models](https://escholarship.org/uc/item/9xj2t25t)".
 - My paper with Alexey Tikhonov has been accepted to _ACL 2022_ main conference! Here it is: "[Transformers in the loop: Polarity in neural models of language](https://aclanthology.org/2022.acl-long.455/)".
