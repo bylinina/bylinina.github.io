@@ -6,7 +6,7 @@ For the students of my 'Linguistics for Language Technology' 2023 course: course
 
 ## News
 
-- Preprint detailing our (Lukas Edman and I) approach to the BabyLM challenge up on arXiv: ["Too Much Information: Keeping Training Simple for BabyLMs"](https://arxiv.org/abs/2311.01955) 
+- Preprint detailing our (Lukas Edman and I) approach to the [BabyLM challenge](https://babylm.github.io/) is up on arXiv: "[Too Much Information: Keeping Training Simple for BabyLMs](https://arxiv.org/abs/2311.01955)"
 - Paper (with Ekaterina Garmash and Alexey Tikhonov) "Connecting degree and polarity: An artificial language learning study" accepted to _EMNLP 2023 main_! [[preprint]](https://arxiv.org/abs/2109.06333)
 - Joint work with Alexey Tikhonov and Denis Paperno on multimodal word representations accepted to \*_SEM_ 2023 [[preprint]](https://arxiv.org/abs/2306.02348)
 - I joined the CompLing group in Groningen as Assistant Professor! Starting 1 Dec 2022.
