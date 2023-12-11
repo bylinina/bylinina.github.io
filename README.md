@@ -6,7 +6,7 @@ For the students of my 'Linguistics for Language Technology' 2023 course: course
 
 ## News
 
-- Preprint of our survey Abzianidze, Lasha, Lisa Bylinina and Denis Paperno 'Semantics and Deep Learning' written for Cambridge Elements in Semantics [up on LingBuzz](https://lingbuzz.net/lingbuzz/007736)
+- Preprint of our survey Abzianidze, Lasha, Lisa Bylinina and Denis Paperno 'Semantics and Deep Learning' written for Cambridge Elements in Semantics is [up on LingBuzz](https://lingbuzz.net/lingbuzz/007736)
 - Paper detailing our (Lukas Edman's and mine) approach to the [BabyLM challenge](https://babylm.github.io/) is up on ACL Anthology: "[Too Much Information: Keeping Training Simple for BabyLMs](https://aclanthology.org/2023.conll-babylm.8/)"
 - Paper (with Ekaterina Garmash and Alexey Tikhonov) "Connecting degree and polarity: An artificial language learning study" accepted to _EMNLP 2023 main_! [[preprint]](https://arxiv.org/abs/2109.06333)
 - Joint work with Alexey Tikhonov and Denis Paperno on multimodal word representations accepted to \*_SEM_ 2023 [[preprint]](https://arxiv.org/abs/2306.02348)
