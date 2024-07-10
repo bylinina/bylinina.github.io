@@ -15,6 +15,7 @@ I wrote up a small thing that contains notes for my 'Linguistics for Language Te
 - Paper detailing our (Lukas Edman's and mine) approach to the [BabyLM challenge](https://babylm.github.io/) is up on ACL Anthology: "[Too Much Information: Keeping Training Simple for BabyLMs](https://aclanthology.org/2023.conll-babylm.8/)"
 - Paper (with Ekaterina Garmash and Alexey Tikhonov) "Connecting degree and polarity: An artificial language learning study" accepted to _EMNLP 2023 main_! [[preprint]](https://arxiv.org/abs/2109.06333)
 - Joint work with Alexey Tikhonov and Denis Paperno on multimodal word representations accepted to \*_SEM_ 2023 [[preprint]](https://arxiv.org/abs/2306.02348)
+
 <!---
 - I joined the CompLing group in Groningen as Assistant Professor! Starting 1 Dec 2022.
 - Paper on polarity in multilingual models accepted to CogSci2022: "[The driving forces of polarity-sensitivity: Experiments with multilingual pre-trained neural language models](https://escholarship.org/uc/item/9xj2t25t)".
