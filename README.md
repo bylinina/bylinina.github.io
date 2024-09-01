@@ -1,14 +1,14 @@
-I am a linguist, interested in theoretical linguistics and in natural language processing. I am currently an Assistant Professor at the University of Groningen, Center for Language and Cognition (CLCG), [Computational Linguistics Group](https://www.rug.nl/research/clcg/research/cl/). In September 2024, I will start as Assistant Professor (UD1, if you know the Dutch system) in Utrecht University. I will be joining the [Language and Communication group](https://www.uu.nl/en/research/institute-for-language-sciences/research/language-and-communication), part of the Institute for Language Sciences.
+I am a linguist, interested in theoretical linguistics and in natural language processing. I am an Assistant Professor (UD1, if you know the Dutch system) at Utrecht University, working in the [Language and Communication group](https://www.uu.nl/en/research/institute-for-language-sciences/research/language-and-communication), part of the Institute for Language Sciences. Before September 2024, I was an Assistant Professor at the University of Groningen, Center for Language and Cognition (CLCG), [Computational Linguistics Group](https://www.rug.nl/research/clcg/research/cl/). 
 
 <!--- 
 Before, I was an NLP / ML engineer at [Bookarang](https://www.bookarang.com/en/), Amsterdam. Prior to that, I worked at Leiden University Centre for Linguistics, leading my NWO VENI project called Number Words. In 2013-2016, I was a postdoc at the Meertens Institute, Amsterdam, working on cross-linguistic variation in morphosyntax of numerals. My dissertation entitled The Grammar of Standards [[pdf]](http://dspace.library.uu.nl/bitstream/handle/1874/296572/bylinina.pdf) was written in Utrecht Institute for Linguistics OTS and defended in 2014.
 --->
 
-I wrote up a small thing that contains notes for my 'Linguistics for Language Technology' 2023 course. The course is over, but people seem to like the website, so if you are here for the course notes, [check them out](https://bylinina.github.io/ling_course/)!
+I wrote up a small thing that contains notes for my 'Linguistics for Language Technology' 2023 course at RuG. The course is over, but people seem to like the website, so if you are here for the course notes, [check them out](https://bylinina.github.io/ling_course/)!
 
 ## News
 
-- \[This is a big one\] I will be joining Utrecht University (Institute for Language Sciences) as Assistant Professor in September 2024! I did my PhD there, so it feels like going home (good).
+- \[This is a big one\] I am joining Utrecht University (Institute for Language Sciences) as Assistant Professor in September 2024! I did my PhD there, so it feels like going home (good).
 - My short research visit to Trento in April 2024 resulted in this joint work with Jaap Jumelet, Jelle Zuidema and Jakub Szymanik: "Black Big Boxes: Do Language Models Hide a Theory of Adjective Order?" (under review at TACL, [preprint](https://arxiv.org/abs/2407.02136))
 - Yasu Sudo, Stavroula Alexandropoulou and I will (virtually) present our work on linguistic acceptability priming for NPIs at [ELM3](https://www.elm-conference.net/archive/elm-3-2024/)
 - Preprint of our survey Abzianidze, Lasha, Lisa Bylinina and Denis Paperno 'Semantics and Deep Learning' written for Cambridge Elements in Semantics is [up on LingBuzz](https://lingbuzz.net/lingbuzz/007736). We expect it to be published by CUP very soon.
