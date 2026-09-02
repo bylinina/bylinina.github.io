@@ -2,12 +2,12 @@ I work at the intersection of theoretical linguistics and natural language proce
 
 I teach in the Applied Data Science master program and in the bachelor program Communication and Information Science. I am open to supervise (research) master theses in data science, AI and theoretical linguistics (semantics, mostly).
 
-Are you here to find some of my teaching materials? Probably you are looking for one of these things:
+Are you here to find some of my teaching materials? Probably you are looking for one of these:
 
 * Two main Colab notebooks from the Transformers course, 2026 edition. Here they are:
     * The [miniGPT Colab](https://colab.research.google.com/drive/1eq0wRwbsqA7SbQDBQKekh2WfjihQrPxC?usp=sharing) (co-authored with [Menan Velayuthan](https://vmenan.github.io/), where we walk you through an implementation of a small transformer decoder in PyTorch, train it for a bit, and watch it learn;
     * The [Instruction-tuning and Agents Colab](https://colab.research.google.com/drive/1Jo5gc7YKuhz-MWjZ3hIm5foS9vdc7p-l?usp=sharing), showing how to turn a sequence-continuation model into an interactive one, and how to equip it with tools.
-* Notes for my 'Linguistics for Language Technology' 2023 course at RuG. The course is over a long time ago, but people seem to like the website, so if you are here for the course notes, [check them out](https://bylinina.github.io/ling_course/)!
+* Notes for my 'Linguistics for Language Technology' 2023 course at RuG. The course ran just once and is over, but people seem to like the website, so if you are here for the course notes, [check them out](https://bylinina.github.io/ling_course/)!
 
 ## News
 
