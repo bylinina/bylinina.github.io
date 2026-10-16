@@ -4,6 +4,7 @@ I teach in the Applied Data Science master program and in the bachelor program C
 
 Are you here to find some of my teaching materials? Probably you are looking for one of these:
 
+* Materials for the **C-LaBL Methods Workshop 'Language Models for Linguistic Research'** @UiT The Arctic University of Norway, Tromsø, October 2026: [the repository](https://github.com/bylinina/c-labl-methods-workshop)
 * Two main Colab notebooks from the Transformers course, 2026 edition. Here they are:
     * The [miniGPT Colab](https://colab.research.google.com/drive/1eq0wRwbsqA7SbQDBQKekh2WfjihQrPxC?usp=sharing) (co-authored with [Menan Velayuthan](https://vmenan.github.io/), where we walk you through an implementation of a small transformer decoder in PyTorch, train it for a bit, and watch it learn;
     * The [Instruction-tuning and Agents Colab](https://colab.research.google.com/drive/1Jo5gc7YKuhz-MWjZ3hIm5foS9vdc7p-l?usp=sharing), showing how to turn a sequence-continuation model into an interactive one, and how to equip it with tools.
