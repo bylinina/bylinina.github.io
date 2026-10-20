@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a model learns</title>
+<meta name="description" content="Gradient descent and backpropagation in 15 cards, with worked numbers and interactive examples. C-LaBL Methods Workshop, UiT Tromsø, October 2026.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23A3162E'/%3E%3Cpath d='M7 9h18L16 25z' fill='none' stroke='white' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+/* Warm greys with one crimson accent (no tinted fills). Crimson = the learning signal:
+   slopes, gradients, backward values. Ink = forward values. */
+:root{
+  --bg:#F5F3EF; --surface:#FFFFFF; --sunk:#F0EDE8; --ink:#1E1C19; --muted:#66605A; --faint:#9A948B;
+  --line:#DDD8CF; --line-strong:#C4BDB2; --accent:#A3162E; --on-accent:#FFFFFF;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141312; --surface:#1C1B19; --sunk:#252321; --ink:#ECE8E2; --muted:#A9A39A; --faint:#7A746C;
+    --line:#35322E; --line-strong:#4A4640; --accent:#E8667A; --on-accent:#1C1B19;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141312; --surface:#1C1B19; --sunk:#252321; --ink:#ECE8E2; --muted:#A9A39A; --faint:#7A746C;
+  --line:#35322E; --line-strong:#4A4640; --accent:#E8667A; --on-accent:#1C1B19;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 var(--sans)}
+a{color:var(--accent)}
+.wrap{max-width:780px;margin:0 auto;padding:0 16px}
+header{padding:36px 0 18px}
+.eyebrow{font:500 12.5px/1.4 var(--mono);color:var(--muted);letter-spacing:.02em;margin:0 0 10px}
+h1{font:600 clamp(32px,6vw,46px)/1.08 var(--serif);margin:0 0 10px;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0;max-width:40em}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 10px;font:500 13px/1 var(--mono);color:var(--muted)}
+.card{display:none;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 28px 24px}
+.card.active{display:block}
+body.all .card{display:block;margin-bottom:18px}
+body.all .nav{display:none}
+.kicker{font:500 12.5px/1.4 var(--mono);color:var(--accent);margin:0 0 6px}
+h2{font:600 clamp(25px,4.4vw,31px)/1.15 var(--serif);margin:0 0 14px;letter-spacing:-.005em}
+h3{font:600 20px/1.25 var(--serif);margin:22px 0 8px}
+.card p{margin:0 0 12px}
+.card ul{margin:0 0 12px;padding-left:1.2em}
+.card li{margin:0 0 6px}
+pre.m{font:400 14px/1.65 var(--mono);background:var(--sunk);border-radius:10px;padding:12px 14px;margin:0 0 14px;overflow-x:auto;white-space:pre;color:var(--ink)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+.acc{color:var(--accent)}
+.mut{color:var(--muted)}
+.rule{border-left:3px solid var(--accent);padding:4px 0 4px 14px;margin:4px 0 14px}
+.rule p{margin:0}
+.small{font-size:14px;color:var(--muted)}
+.wd{border:1px solid var(--line);border-radius:12px;padding:14px;margin:4px 0 16px}
+.wd svg{display:block;width:100%;max-width:540px;margin:0 auto;height:auto;touch-action:manipulation}
+.ctrl{display:flex;align-items:center;gap:12px;margin:0 0 10px;flex-wrap:wrap}
+.ctrl label{font:500 13px/1 var(--mono);color:var(--muted);min-width:1.5em}
+.ctrl input[type=range]{flex:1;min-width:140px}
+input[type=range]{accent-color:var(--accent);height:28px}
+.val{font:500 15px/1 var(--mono);min-width:3.6em;text-align:right}
+.ro{font:400 14px/1.7 var(--mono);margin:8px 0 0;color:var(--ink)}
+.ro b{font-weight:500}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+button{font:500 14px/1 var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:9px 14px;cursor:pointer;min-height:38px}
+button:hover{border-color:var(--ink)}
+button:active{transform:scale(.98)}
+button.on{border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px}
+.nav button{min-width:96px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;flex:1}
+.dot{width:9px;height:9px;padding:0;min-height:0;border-radius:50%;border:none;background:var(--line-strong)}
+.dot.on{background:var(--accent)}
+table.t{width:100%;border-collapse:collapse;font:400 13px/1.4 var(--mono);font-variant-numeric:tabular-nums}
+table.t th{font-weight:500;color:var(--muted);text-align:right;padding:4px 4px;border-bottom:1px solid var(--line)}
+table.t td{text-align:right;padding:5px 4px;border-bottom:1px solid var(--line)}
+table.t td.s{color:var(--accent)}
+table.t tr.last td{font-weight:500}
+.formula{font:400 17px/1.5 var(--mono);text-align:center;margin:6px 0 4px}
+.fx{display:inline-block;text-align:center;vertical-align:top;margin:0 4px}
+.fx .brk{border-bottom:2px solid var(--accent);padding:0 4px}
+.fx .cap{display:block;font:400 12px/1.35 var(--sans);color:var(--muted);margin-top:4px}
+.chain{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:6px 0 14px;font:500 15px/1 var(--mono)}
+.chain .n{border:1.5px solid var(--ink);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center}
+.chain .a{color:var(--accent);padding:0 4px}
+.bars{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;font:400 13px/1.3 var(--mono);margin-top:12px}
+.bar{height:14px;background:var(--line-strong);border-radius:3px}
+.bar.acc{background:var(--accent)}
+.vrow{display:grid;grid-template-columns:58px minmax(0,1fr) 44px;gap:4px 10px;align-items:center;margin:0 0 4px;font:400 14px/1.3 var(--mono)}
+.vrow .meta{grid-column:2 / 4;display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:8px}
+.pbar{flex:1;height:10px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--line-strong)}
+.pbar i.acc{background:var(--accent)}
+.big{font:500 22px/1.2 var(--mono)}
+.refs{font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:16px}
+.refs p{margin:0 0 6px}
+svg text{font-family:var(--mono)}
+.grid{stroke:var(--line);stroke-width:1}
+.tick{fill:var(--faint);font-size:11px}
+.axl{fill:var(--muted);font-size:12px}
+.curve{fill:none;stroke:var(--muted);stroke-width:2}
+.guide{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 3}
+.ln-acc{stroke:var(--accent);stroke-width:2}
+.ln-dash{stroke:var(--ink);stroke-width:1.2;stroke-dasharray:5 4;opacity:.55}
+.ln-path{stroke:var(--accent);stroke-width:1.6;fill:none}
+.d-acc{fill:var(--accent)}
+.d-ink{fill:var(--ink)}
+.d-hollow{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.contour{fill:none;stroke:var(--line-strong);stroke-width:1}
+.sq-in{fill:var(--sunk);stroke:var(--ink);stroke-width:1.2}
+.sq-out{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-dasharray:4 3}
+.strip{fill:var(--accent)}
+.corner{fill:var(--ink)}
+.lbl{fill:var(--ink);font-size:12px}
+.lbl-acc{fill:var(--accent);font-size:12px}
+.g-box{fill:var(--surface);stroke:var(--line-strong);stroke-width:1.2}
+.g-box.knob{stroke:var(--ink);stroke-width:1.6}
+.g-box.hot{stroke:var(--accent);stroke-width:2.4}
+.g-op{fill:var(--sunk);stroke:var(--line-strong);stroke-width:1.2}
+.g-op.hot{stroke:var(--accent);stroke-width:2.4}
+.g-edge{stroke:var(--line-strong);stroke-width:1.5}
+.g-edge.hot{stroke:var(--ink);stroke-width:2.4}
+.g-edge.hotb{stroke:var(--accent);stroke-width:2.4}
+.g-v{fill:var(--ink);font-size:15px}
+.g-g{fill:var(--accent);font-size:13.5px}
+.g-s{fill:var(--muted);font-size:12px}
+.g-sym{fill:var(--ink);font-size:14px}
+footer{color:var(--muted);font-size:14px;padding:18px 0 40px}
+@media (max-width:560px){
+  body{font-size:16px}
+  .card{padding:20px 16px 18px;border-radius:14px}
+  pre.m{font-size:12.6px;padding:11px 12px}
+  .wd{padding:12px 10px}
+  table.t{font-size:12px}
+  table.t th,table.t td{padding:4px 2px}
+  .nav button{min-width:0}
+  .formula{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">C-LaBL Methods Workshop · UiT Tromsø · October 2026</p>
+  <h1>How a model learns</h1>
+  <p class="lede">Gradient descent and backpropagation in 15 cards, with numbers you can check by hand. Move between cards with the arrows, the arrow keys or a swipe.</p>
+</header>
+
+<div class="toolbar"><span id="count">1 / 15</span><button id="allbtn" type="button">Show all cards</button></div>
+
+<main id="cards">
+
+<!-- 1 -->
+<section class="card" id="c1" aria-label="Card 1">
+  <p class="kicker">1 · The big picture</p>
+  <h2>Training in one sentence</h2>
+  <p>A neural network is a function with a lot of adjustable numbers inside it: the weights. Think of them as knobs. Training means turning the knobs so that one number, the <b>loss</b>, goes down.</p>
+  <p>For a language model, the loss is the surprisal of the token that actually came next:</p>
+<pre class="m">loss = −ln P(actual next token)
+
+P = 0.25  →  loss = 1.39 nats  (2 bits)
+P = 0.90  →  loss = 0.11 nats</pre>
+  <p>So training a language model means making real text less surprising to it, averaged over a very large number of positions in the training data.</p>
+  <p>That leaves two questions, and the rest of the cards answer them. Which way should each knob turn? That's <b>gradient descent</b>. And how do we work that out for millions of knobs at once? That's <b>backpropagation</b>.</p>
+</section>
+
+<!-- 2 -->
+<section class="card" id="c2" aria-label="Card 2">
+  <p class="kicker">2 · A toy model</p>
+  <h2>A model with one knob</h2>
+  <p>Strip everything down to one weight, <i>w</i>. The model multiplies its input by <i>w</i>:</p>
+<pre class="m">model:  ŷ = w · x
+        (ŷ, "y-hat", is the guess)
+data:   x = 2, correct answer y = 6
+loss:   L = (ŷ − y)²  (squared error)</pre>
+  <p>At <i>w</i> = 1 the guess is ŷ = 2 and the loss is (2 − 6)² = 16. Drag the knob:</p>
+  <div class="wd">
+    <div class="ctrl"><label for="w2">w</label><input id="w2" type="range" min="-1" max="7" step="0.05" value="1"></div>
+    <svg id="p2" role="img" aria-label="Loss as a function of w: a parabola with its minimum at w = 3"></svg>
+    <p class="ro" id="ro2"></p>
+  </div>
+  <p>Here we can see the whole curve, with the bottom at <i>w</i> = 3. A real model can't: with millions of knobs there is no curve to look at. All it can compute is the loss where it currently stands, plus a local clue about which way is downhill. That clue is the derivative.</p>
+</section>
+
+<!-- 3 -->
+<section class="card" id="c3" aria-label="Card 3">
+  <p class="kicker">3 · The derivative</p>
+  <h2>The derivative is a nudge test</h2>
+  <p>Stand at <i>w</i> = 1. Nudge the knob by a small amount, recompute the loss, and divide the change in loss by the size of the nudge. Pick a nudge size:</p>
+  <div class="wd">
+    <div class="btns" id="h3" style="margin:0 0 10px"></div>
+    <svg id="p3" role="img" aria-label="The loss curve with a line through the starting point and the nudged point"></svg>
+    <p class="ro" id="ro3"></p>
+  </div>
+  <p>As the nudge shrinks, the ratio settles on <b>−16</b>, and the crimson line through the two points turns into the <b>tangent</b> (dashed): the line that just touches the curve at <i>w</i> = 1. That limiting ratio is the derivative of the loss with respect to <i>w</i>, written <span class="mono">dL/dw</span>.</p>
+  <p>Read it as an exchange rate: at this spot, each unit added to <i>w</i> changes the loss by about −16. The sign gives the direction (negative: increasing <i>w</i> lowers the loss). The size gives the steepness; near the bottom it gets close to 0.</p>
+</section>
+
+<!-- 4 -->
+<section class="card" id="c4" aria-label="Card 4">
+  <p class="kicker">4 · The shortcut, part 1</p>
+  <h2>The slope of a square</h2>
+  <p>Nudge tests work, but every one costs an extra run of the model. There is a shortcut that gives −16 exactly, from numbers we already have. It rests on two simple facts. The first is about squares.</p>
+  <p>The loss is a square: L = gap², and the gap between the correct answer and the guess is 6 − 2 = 4. Now push the guess ŷ up by a small amount <i>h</i>. The gap shrinks to 4 − <i>h</i>, so the square loses area:</p>
+  <div class="wd">
+    <div class="ctrl"><label for="h4">h</label><input id="h4" type="range" min="0" max="5" step="1" value="0"><span class="val" id="h4v">1</span></div>
+    <svg id="p4" role="img" aria-label="A 4 by 4 square shrinking to 4 minus h, with two strips cut off and a small corner"></svg>
+    <p class="ro" id="ro4"></p>
+  </div>
+  <p>Two crimson strips of 4 × <i>h</i> are cut off. Where they overlap, the little <i>h</i> × <i>h</i> corner has been cut twice, so it's added back once. As <i>h</i> gets small, the corner stops mattering (0.01 × 0.01 = 0.0001, next to strips worth 0.08), and the loss changes at a rate of −2 × 4 = −8 per unit that ŷ moves up.</p>
+  <div class="rule"><p><b>Rule:</b> the slope of a square is 2 × the thing being squared. Here that thing is ŷ − y = −4, so <span class="mono">dL/dŷ = 2·(ŷ − y) = −8</span>.</p></div>
+</section>
+
+<!-- 5 -->
+<section class="card" id="c5" aria-label="Card 5">
+  <p class="kicker">5 · The shortcut, part 2</p>
+  <h2>Through the multiplication</h2>
+  <p>The second fact: ŷ = <i>w</i> · <i>x</i> with <i>x</i> = 2. If <i>w</i> moves by <i>h</i>, ŷ moves by 2<i>h</i>: twice as far, because <i>w</i> gets multiplied by 2. So the rate of ŷ with respect to <i>w</i> is just <i>x</i>.</p>
+  <p>Now chain the two facts. Follow a nudge of 0.01 through the model:</p>
+<pre class="m">w moves by               0.01
+ŷ moves by   2 × 0.01  =  0.02
+L moves by  −8 × 0.02  = −0.16
+
+L per unit of w:  −0.16 ÷ 0.01 = −16</pre>
+  <p>Written as a formula, that is all the "calculus" amounts to:</p>
+  <div class="formula">dL/dw = <span class="fx"><span class="brk">2·(ŷ − y)</span><span class="cap">rate of the square<br>here −8</span></span> × <span class="fx"><span class="brk">x</span><span class="cap">rate of the<br>multiplication: 2</span></span> <span style="white-space:nowrap">= −16</span></div>
+  <p style="margin-top:12px">Everything in it (ŷ, y and <i>x</i>) is already known once the loss has been computed, so no extra runs are needed. Drag the knob: the formula and a nudge test agree everywhere, and the crimson line has exactly that slope.</p>
+  <div class="wd">
+    <div class="ctrl"><label for="w5">w</label><input id="w5" type="range" min="-1" max="7" step="0.05" value="1"></div>
+    <svg id="p5" role="img" aria-label="The loss curve with the tangent line at the chosen w"></svg>
+    <p class="ro" id="ro5"></p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="card" id="c6" aria-label="Card 6">
+  <p class="kicker">6 · Gradient descent</p>
+  <h2>Step against the slope</h2>
+<pre class="m">new w = w − learning rate × slope</pre>
+  <p>The minus sign does the steering: a negative slope (loss falls to the right) moves <i>w</i> up, a positive slope moves it down. The learning rate (lr) sets the step size. With lr = 0.05, starting from <i>w</i> = 1:</p>
+  <div class="wd">
+    <table class="t" id="t6"><thead><tr><th>step</th><th>w</th><th>ŷ</th><th>loss</th><th>slope</th><th>Δw</th></tr></thead><tbody></tbody></table>
+    <p class="small" style="margin:6px 0 10px">slope = 2·(ŷ − 6)·2 &nbsp;·&nbsp; Δw = −0.05 × slope &nbsp;·&nbsp; rounded to 2 decimals</p>
+    <svg id="p6" role="img" aria-label="The loss curve with one dot per gradient descent step"></svg>
+    <div class="btns"><button type="button" id="b6n">Take a step</button><button type="button" id="b6r">Reset</button></div>
+  </div>
+  <p>No one tells the model to slow down near the bottom: the slope gets gentler there, so the steps shrink by themselves. In this toy the gap to the right answer shrinks by the same factor, 0.6, at every step.</p>
+</section>
+
+<!-- 7 -->
+<section class="card" id="c7" aria-label="Card 7">
+  <p class="kicker">7 · The learning rate</p>
+  <h2>Too small, about right, too big</h2>
+  <p>Same model, same start (<i>w</i> = 1), different learning rates. Drag the slider and watch the first six steps.</p>
+  <div class="wd">
+    <div class="ctrl"><label for="lr7">lr</label><input id="lr7" type="range" min="0.01" max="0.3" step="0.01" value="0.05"><span class="val" id="lr7v">0.05</span></div>
+    <svg id="p7" role="img" aria-label="Gradient descent steps on the loss curve for the chosen learning rate"></svg>
+    <p class="ro" id="ro7"></p>
+  </div>
+  <p>Too small is safe but slow. Too big overshoots the bottom by more than it started from, and the loss explodes. In real training the learning rate is one of the main settings people tune, and it usually follows a schedule: a short warm-up, then a gradual decrease.</p>
+</section>
+
+<!-- 8 -->
+<section class="card" id="c8" aria-label="Card 8">
+  <p class="kicker">8 · Many knobs</p>
+  <h2>Partial derivatives and the gradient</h2>
+  <p>Real models have millions of knobs. Add a second one to the toy, a bias <i>b</i>, and a second training example:</p>
+<pre class="m">model:  ŷ = w · x + b
+data:   x = 1, y = 3  and  x = 2, y = 6
+loss:   average squared error
+
+w = 1, b = 0:  guesses 1 and 2
+errors −2 and −4,  L = (4 + 16)/2 = 10</pre>
+  <p>A <b>partial derivative</b> is the same nudge test, one knob at a time, with every other knob frozen. With the shortcut from cards 4 and 5:</p>
+<pre class="m">∂L/∂w:  average of 2·(ŷ − y)·x
+        = (−4 + −16) / 2 = −10
+∂L/∂b:  average of 2·(ŷ − y)·1
+        = (−4 + −8) / 2  = −6</pre>
+  <p>The list of all the partial derivatives, here (−10, −6), is the <b>gradient</b>. It points uphill, in the steepest direction. Gradient descent steps every knob at once, against it. With lr = 0.1: <i>w</i> = 2.0, <i>b</i> = 0.6, and the loss drops from 10 to 1.06.</p>
+  <div class="wd">
+    <svg id="p8" role="img" aria-label="Contour map of the loss over w and b with a gradient descent path"></svg>
+    <p class="ro" id="ro8"></p>
+    <div class="btns"><button type="button" id="b8s">Take a step</button><button type="button" id="b8r">Run 60 steps</button><button type="button" id="b8x">Reset</button></div>
+    <p class="small" style="margin:10px 0 0">Tap the map to pick a starting point. Each ring is a line of equal loss; the black dot at <i>w</i> = 3, <i>b</i> = 0 is the bottom. The crimson arrow is the first step: against the gradient, at right angles to the rings.</p>
+  </div>
+  <p>The path drops quickly into the valley, then crawls along its floor. Long, narrow valleys like this one are common in real networks too, and they are one reason practical optimizers add momentum (last card).</p>
+</section>
+
+<!-- 9 -->
+<section class="card" id="c9" aria-label="Card 9">
+  <p class="kicker">9 · The chain rule</p>
+  <h2>Rates along a chain multiply</h2>
+  <p>Card 5 already used it. If gear A turns gear B 3 times per turn, and B turns gear C 2 times per turn, then A turns C 3 × 2 = 6 times per turn.</p>
+  <div class="chain" aria-hidden="true"><span class="n">A</span><span class="a">×3 →</span><span class="n">B</span><span class="a">×2 →</span><span class="n">C</span><span class="mut" style="padding-left:10px">A → C: ×6</span></div>
+  <p>A network is a long chain of simple steps. How strongly the loss responds to any knob is the product of the local rates along the path from that knob to the loss. For the one-knob toy:</p>
+<pre class="m">step         local rate
+ŷ = w · x    dŷ/dw = x  =  2
+e = ŷ − y    de/dŷ = 1
+L = e²       dL/de = 2e = −8
+─────────────────────────────
+dL/dw = 2 × 1 × (−8) = −16</pre>
+  <p>Each step only needs its own local rate, and those are easy. A multiplication passes on the other factor. An addition or subtraction passes on 1. A square passes on 2 × what was squared. Nobody ever needs a formula for the whole network.</p>
+</section>
+
+<!-- 10 -->
+<section class="card" id="c10" aria-label="Card 10">
+  <p class="kicker">10 · Backpropagation</p>
+  <h2>Forward, then backward</h2>
+  <p>Backprop applies the chain rule to every knob in one sweep: run the model forward to get the loss, then walk back from the loss, multiplying local rates as you go. A toy with two layers and two knobs, <i>w</i>₁ and <i>w</i>₂:</p>
+  <div class="wd">
+    <svg id="g10" role="img" aria-label="Computation graph: x times w1 gives h, h times w2 gives y-hat, the squared error gives the loss"></svg>
+    <p class="ro" id="s10n" style="color:var(--muted)"></p>
+    <p id="s10" style="margin:4px 0 0;min-height:4.8em"></p>
+    <div class="btns"><button type="button" id="b10p">Back</button><button type="button" id="b10n">Next</button><button type="button" id="b10r">Reset</button></div>
+  </div>
+  <p>Check by nudging: with <i>w</i>₁ = 2.01 the loss goes from 4 to 3.980, a rate of −2. ✓</p>
+  <p><i>w</i>₂ gets the bigger correction because the loss is more sensitive to it (−8 against −2). Notice also that the backward pass reused values from the forward pass (<i>h</i>, <i>w</i>₂, <i>x</i>). That's why they're kept in memory during training, and why training needs far more memory than just running a model.</p>
+</section>
+
+<!-- 11 -->
+<section class="card" id="c11" aria-label="Card 11">
+  <p class="kicker">11 · Cost</p>
+  <h2>Why backprop is cheap</h2>
+  <p>The nudge test needs one extra forward pass per knob. Backprop gets every slope from a single backward pass, which costs about as much as two forward passes. Where does the "two" come from?</p>
+  <p>Nearly all the computation in a neural network is multiplying a weight by an incoming value. Take one such multiplication, out = <i>w</i> · <i>a</i>, and suppose the backward pass has delivered the signal <i>g</i> = dL/d(out) to it:</p>
+<pre class="m">forward:   out = w · a      (1 ×)
+
+backward:  slope for w:   g · a
+           signal for a:  g · w  (2 ×)</pre>
+  <p>Each multiplication in the forward pass turns into two in the backward pass: one gives the weight its slope, the other sends the signal further back. Additions just pass the signal through. In matrix terms, a layer's forward pass is one matrix multiplication and its backward pass is two of the same size. Hence backward ≈ 2 × forward, and a whole training step ≈ 3 forward passes, however many weights there are. This is where the usual estimate comes from: running a model costs about 2 operations per weight per token, training about 6.</p>
+  <p>The signal is also computed once and shared. In card 10, dL/dh = −2 served <i>w</i>₁; in a deep network, the signal arriving at a layer serves every weight below it.</p>
+  <div class="wd">
+    <div class="btns" id="m11" style="margin:0 0 4px"></div>
+    <p class="small" style="margin:10px 0 0">Forward passes per training step (log scale)</p>
+    <div class="bars" id="bars11"></div>
+    <p class="ro" id="ro11"></p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="card" id="c12" aria-label="Card 12">
+  <p class="kicker">12 · Language models</p>
+  <h2>Scores, probabilities, loss</h2>
+  <p>Back to language models. The last layer gives every word in the vocabulary a score, called a <b>logit</b>. <b>Softmax</b> turns the scores into probabilities: raise <i>e</i> to the power of each score, then divide by the total so that everything sums to 1. A toy vocabulary of three words, after <i>Emma put her mug of …</i></p>
+<pre class="m">word    score   e^score   P
+tea      2.0     7.39    0.50
+coffee   1.5     4.48    0.30
+juice    1.1     3.00    0.20
+total           14.87    1.00
+
+P = e^score ÷ total,  e.g. 7.39 ÷ 14.87</pre>
+  <p>Suppose the text actually continues with <i>coffee</i>. The loss is coffee's surprisal:</p>
+<pre class="m">L = −ln P(coffee)
+  = −ln 0.30 = 1.20 nats</pre>
+  <p>Only coffee's probability appears in the loss. But that probability depends on all three scores: raising tea's score makes the total bigger and coffee's share smaller. So every score gets a slope, and the next card works them out.</p>
+</section>
+
+<!-- 13 -->
+<section class="card" id="c13" aria-label="Card 13">
+  <p class="kicker">13 · The learning signal</p>
+  <h2>The slope for every score</h2>
+  <p>Same nudge test as before: add 0.01 to one score, recompute the probabilities and the loss, and divide the change in loss by 0.01.</p>
+<pre class="m">nudged   P(coffee)   loss     rate
+(none)    0.3013    1.1997
+coffee    0.3034    1.1927   <span class="acc">−0.70</span>
+tea       0.2998    1.2047   <span class="acc">+0.50</span>
+juice     0.3007    1.2017   <span class="acc">+0.20</span></pre>
+  <p>The rates follow one simple pattern:</p>
+  <div class="rule"><p><b>slope for a word's score = P(word) − 1</b> if it's the word that actually came next, <b>P(word)</b> otherwise.<br><span class="mono">coffee 0.30 − 1 = −0.70 · tea +0.50 · juice +0.20</span></p></div>
+  <p>Why? The loss can be rewritten as L = −(coffee's score) + ln(total). The first part lowers the loss at rate 1 when coffee's score goes up. The second part, ln(total), responds to each word's score in proportion to that word's share of the total, which is exactly its probability. Together: P(word) − 1 for the correct word, P(word) for every other word.</p>
+  <p>Gradient descent subtracts lr × slope from each score (here lr = 1):</p>
+<pre class="m">tea     2.0 − 0.50 = 1.50  →  P = 0.28
+coffee  1.5 + 0.70 = 2.20  →  P = 0.56
+juice   1.1 − 0.20 = 0.90  →  P = 0.15
+loss:   1.20 → 0.57 nats</pre>
+  <ul>
+    <li>The correct word is pushed up by 1 − its probability. The more surprised the model was, the bigger the push; a word already at 0.99 barely changes anything. Learning is driven by prediction error.</li>
+    <li>Each wrong word is pushed down in proportion to how much the model believed in it.</li>
+    <li>The slopes sum to zero (−0.70 + 0.50 + 0.20 = 0): probability moves from the wrong words to the right one.</li>
+  </ul>
+</section>
+
+<!-- 14 -->
+<section class="card" id="c14" aria-label="Card 14">
+  <p class="kicker">14 · Try it</p>
+  <h2>One prediction, one update</h2>
+  <p>Set the three scores, choose which word actually came next, and take gradient steps. The correct word's slope is always P − 1; the others' are just P.</p>
+  <div class="wd">
+    <div class="ctrl" style="margin-bottom:14px"><label style="min-width:auto">next word was</label><div class="btns" id="c14w" style="margin:0"></div></div>
+    <div id="rows14"></div>
+    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:6px"><span class="big" id="loss14"></span><span class="ro" id="sum14" style="margin:0"></span></div>
+    <div class="btns"><button type="button" id="b14s">Take a step (lr = 1)</button><button type="button" id="b14r">Reset</button></div>
+  </div>
+  <h3>Where the signal goes next</h3>
+  <p>Each score is computed from the model's final hidden vector <i>h</i> and an output vector for that word: score = (word's output vector) · <i>h</i>. So the slopes flow two ways. Coffee's output vector is nudged toward <i>h</i>, and tea's and juice's away from it. And the signal for <i>h</i> says: move toward coffee's output vector and away from the others. Backprop carries that signal down through every layer, to every weight, embeddings included.</p>
+</section>
+
+<!-- 15 -->
+<section class="card" id="c15" aria-label="Card 15">
+  <p class="kicker">15 · Putting it together</p>
+  <h2>The real training loop</h2>
+<pre class="m">repeat, thousands of times:
+  1. take a batch of text snippets
+  2. forward: predict every next token,
+     average the surprisals → loss
+  3. backward: a slope for every weight
+  4. update: step every weight
+     against its slope</pre>
+  <p>This is <b>stochastic gradient descent</b>. Each batch is a small random sample of the training data, so its gradient is a noisy estimate of the gradient over all the data, but a much cheaper one. The loss is an average over every position in the batch, so the slopes are averages too: each position contributes its own P − 1 / P signal from card 13, carried down by backprop.</p>
+  <p>In practice, step 4 uses <b>Adam</b> or AdamW instead of the plain update. Adam keeps a running average of recent slopes (momentum, which helps in long, narrow valleys like the one in card 8) and scales each weight's step by how large that weight's slopes have been. The learning rate is still the main setting.</p>
+  <p>The tiny GPT from the afternoon practical has about 4.2 million weights. Every one of its training steps computed 4.2 million slopes this way, with one forward and one backward pass.</p>
+  <div class="refs">
+    <p><b style="color:var(--ink)">Further reading</b></p>
+    <p>Rumelhart, Hinton &amp; Williams (1986). Learning representations by back-propagating errors. <i>Nature</i> 323. <a href="https://doi.org/10.1038/323533a0">doi:10.1038/323533a0</a></p>
+    <p>Kingma &amp; Ba (2015). Adam: A method for stochastic optimization. ICLR. <a href="https://arxiv.org/abs/1412.6980">arXiv:1412.6980</a></p>
+    <p>Loshchilov &amp; Hutter (2019). Decoupled weight decay regularization (AdamW). ICLR. <a href="https://arxiv.org/abs/1711.05101">arXiv:1711.05101</a></p>
+    <p>Kaplan et al. (2020). Scaling laws for neural language models (the 2 vs 6 operations per weight per token estimate, section 2.1). <a href="https://arxiv.org/abs/2001.08361">arXiv:2001.08361</a></p>
+  </div>
+</section>
+
+</main>
+
+<nav class="nav" aria-label="Card navigation">
+  <button type="button" id="prev" aria-label="Previous card">← Back</button>
+  <div class="dots" id="dots"></div>
+  <button type="button" id="next" aria-label="Next card">Next →</button>
+</nav>
+
+<footer>Part of the materials for <a href="https://github.com/bylinina/c-labl-methods-workshop">Language models for linguistic research</a>, C-LaBL Methods Workshop, UiT The Arctic University of Norway, Tromsø, 20 and 22 October 2026.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+function $(id){return document.getElementById(id)}
+function el(t,a,p){var e=document.createElementNS(NS,t);if(a)for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function tx(a,p,s){var e=el("text",a,p);e.textContent=s;return e}
+function clear(g){while(g.firstChild)g.removeChild(g.firstChild)}
+function f(v,d){if(d===undefined)d=2;if(Math.abs(v)<Math.pow(10,-d)/2)v=0;return(v<0?"−":"")+Math.abs(v).toFixed(d)}
+function fs(v,d){if(d===undefined)d=2;if(Math.abs(v)<Math.pow(10,-d)/2)return(0).toFixed(d);return(v<0?"−":"+")+Math.abs(v).toFixed(d)}
+function g6(v){var s=String(+Math.abs(v).toFixed(6));return(v<0?"−":"")+s}
+var L1=function(w){return Math.pow(2*w-6,2)};
+var S1=function(w){return 2*(2*w-6)*2};
+
+/* ---------- shared parabola plot: loss L = (2w - 6)^2 over w in [-1, 7] ---------- */
+function parabola(svg){
+  var W=360,H=226,ml=36,mr=14,mt=22,mb=42;
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  var X=function(w){return ml+(w+1)/8*(W-ml-mr)}, Y=function(L){return H-mb-L/64*(H-mt-mb)};
+  var id="cp"+Math.random().toString(36).slice(2,8);
+  var cp=el("clipPath",{id:id},el("defs",null,svg));
+  el("rect",{x:ml,y:mt-6,width:W-ml-mr,height:H-mt-mb+6},cp);
+  [0,16,32,48,64].forEach(function(v){el("line",{x1:ml,x2:W-mr,y1:Y(v),y2:Y(v),"class":"grid"},svg);tx({x:ml-6,y:Y(v)+4,"class":"tick","text-anchor":"end"},svg,String(v))});
+  for(var w=-1;w<=7;w++)tx({x:X(w),y:H-mb+16,"class":"tick","text-anchor":"middle"},svg,w<0?"−1":String(w));
+  tx({x:(ml+W-mr)/2,y:H-6,"class":"axl","text-anchor":"middle"},svg,"w");
+  tx({x:ml-6,y:12,"class":"axl","text-anchor":"start"},svg,"loss");
+  var d="";for(var i=0;i<=160;i++){var ww=-1+i*0.05;d+=(i?"L":"M")+X(ww).toFixed(1)+" "+Y(L1(ww)).toFixed(1)}
+  el("path",{d:d,"class":"curve"},svg);
+  var g=el("g",{"clip-path":"url(#"+id+")"},svg);
+  var top=el("g",{"clip-path":"url(#"+id+")"},svg);
+  return {X:X,Y:Y,g:g,top:top,
+    seg:function(wa,wb,w0,L0,s,cls){el("line",{x1:X(wa),y1:Y(L0+s*(wa-w0)),x2:X(wb),y2:Y(L0+s*(wb-w0)),"class":cls},g)},
+    guide:function(w,L){el("line",{x1:X(w),x2:X(w),y1:Y(0),y2:Y(Math.min(L,64)),"class":"guide"},g)},
+    dot:function(w,L,cls,r){el("circle",{cx:X(w),cy:Y(L),r:r||4.5,"class":cls},top)},
+    line:function(w1,L1v,w2,L2v,cls){el("line",{x1:X(w1),y1:Y(L1v),x2:X(w2),y2:Y(L2v),"class":cls},g)},
+    reset:function(){clear(g);clear(top)}};
+}
+
+/* ---------- card 2 ---------- */
+(function(){
+  var P=parabola($("p2")),s=$("w2"),ro=$("ro2");
+  function up(){var w=+s.value,L=L1(w);P.reset();P.guide(w,L);P.dot(w,L,"d-acc",6);
+    ro.innerHTML="w = <b>"+f(w)+"</b> &nbsp;→&nbsp; ŷ = "+f(2*w)+" &nbsp;→&nbsp; loss = <b>"+f(L)+"</b>";}
+  s.addEventListener("input",up);up();
+})();
+
+/* ---------- card 3 ---------- */
+(function(){
+  var P=parabola($("p3")),ro=$("ro3"),box=$("h3"),hs=[1,0.1,0.01,0.001],cur=1,btns=[];
+  hs.forEach(function(h){var b=document.createElement("button");b.type="button";b.textContent="nudge "+h;b.onclick=function(){cur=h;up()};box.appendChild(b);btns.push(b)});
+  function up(){
+    var h=cur,w1=1+h,L=L1(w1),dL=L-16,r=dL/h;
+    btns.forEach(function(b,i){b.className=hs[i]===h?"on":""});
+    P.reset();
+    P.seg(-0.2,2.2,1,16,-16,"ln-dash");
+    P.seg(1-0.9,w1+0.9,1,16,r,"ln-acc");
+    P.dot(1,16,"d-acc",5.5);P.dot(w1,L,"d-hollow",5);
+    ro.innerHTML="w: 1 → "+g6(w1)+"<br>loss: 16 → "+g6(L)+"<br>change ÷ nudge = "+g6(dL)+" ÷ "+h+" = <b class='acc'>"+g6(r)+"</b>";
+  }
+  up();
+})();
+
+/* ---------- card 4: the square ---------- */
+(function(){
+  var svg=$("p4"),s=$("h4"),sv=$("h4v"),ro=$("ro4"),hs=[1,0.5,0.2,0.1,0.05,0.01];
+  svg.setAttribute("viewBox","0 0 250 214");svg.style.maxWidth="320px";
+  var k=40,x0=46,y0=26,g=el("g",null,svg);
+  function up(){
+    var h=hs[+s.value],r=4-h;clear(g);sv.textContent=String(h);
+    el("rect",{x:x0,y:y0,width:4*k,height:4*k,"class":"sq-out"},g);
+    el("rect",{x:x0,y:y0,width:r*k,height:r*k,"class":"sq-in"},g);
+    el("rect",{x:x0+r*k,y:y0,width:h*k,height:4*k,"class":"strip"},g);
+    el("rect",{x:x0,y:y0+r*k,width:4*k,height:h*k,"class":"strip"},g);
+    el("rect",{x:x0+r*k,y:y0+r*k,width:h*k,height:h*k,"class":"corner"},g);
+    tx({x:x0+2*k,y:y0-9,"class":"lbl","text-anchor":"middle"},g,"4");
+    tx({x:x0-10,y:y0+2*k+4,"class":"lbl","text-anchor":"end"},g,"4");
+    tx({x:x0+r*k/2,y:y0+r*k/2+4,"class":"lbl","text-anchor":"middle"},g,r>=2.4?"(4 − h)²":"");
+    tx({x:x0+4*k+8,y:y0+14,"class":"lbl-acc"},g,"h");
+    tx({x:x0+12,y:y0+4*k+20,"class":"lbl-acc"},g,"h");
+    var a=8*h,c=h*h,ch=-a+c;
+    ro.innerHTML="before: 4² = 16 &nbsp;·&nbsp; after: (4 − "+h+")² = "+g6(r*r)+
+      "<br>two strips: −2 × 4 × "+h+" = <span class='acc'>"+g6(-a)+"</span>"+
+      "<br>corner added back: +"+h+"² = +"+g6(c)+
+      "<br>change in loss: "+g6(ch)+"  →  per unit of ŷ: "+g6(ch)+" ÷ "+h+" = <b class='acc'>"+g6(ch/h)+"</b>";
+  }
+  s.addEventListener("input",up);up();
+})();
+
+/* ---------- card 5 ---------- */
+(function(){
+  var P=parabola($("p5")),s=$("w5"),ro=$("ro5");
+  function up(){var w=+s.value,yh=2*w,L=L1(w),sl=S1(w),nt=(L1(w+0.001)-L)/0.001;
+    P.reset();P.seg(w-1.4,w+1.4,w,L,sl,"ln-acc");P.dot(w,L,"d-acc",5.5);
+    ro.innerHTML="w = "+f(w)+" &nbsp;·&nbsp; ŷ = "+f(yh)+" &nbsp;·&nbsp; loss = "+f(L)+
+      "<br>formula: 2·("+f(yh)+" − 6)·2 = <b class='acc'>"+f(sl)+"</b>"+
+      "<br>nudge test (h = 0.001): "+f(nt,3);}
+  s.addEventListener("input",up);up();
+})();
+
+/* ---------- card 6: the table ---------- */
+(function(){
+  var P=parabola($("p6")),tb=$("t6").querySelector("tbody"),lr=0.05,rows=[],n=4,MAX=12;
+  var w=1;for(var i=0;i<MAX;i++){var yh=2*w,L=L1(w),sl=S1(w),dw=-lr*sl;rows.push([i,w,yh,L,sl,dw]);w+=dw}
+  function up(){
+    var h="";for(var i=0;i<n;i++){var r=rows[i];h+="<tr"+(i===n-1?" class='last'":"")+"><td>"+r[0]+"</td><td>"+f(r[1])+"</td><td>"+f(r[2])+"</td><td>"+f(r[3])+"</td><td class='s'>"+f(r[4])+"</td><td>"+fs(r[5])+"</td></tr>"}
+    tb.innerHTML=h;P.reset();
+    for(var j=0;j<n;j++){if(j)P.line(rows[j-1][1],rows[j-1][3],rows[j][1],rows[j][3],"ln-path");}
+    for(var j2=0;j2<n;j2++)P.dot(rows[j2][1],rows[j2][3],j2===n-1?"d-acc":"d-ink",j2===n-1?5.5:3.5);
+    $("b6n").textContent=n>=MAX?"That's enough steps":"Take a step";
+  }
+  $("b6n").onclick=function(){if(n<MAX){n++;up()}};
+  $("b6r").onclick=function(){n=1;up()};
+  up();
+})();
+
+/* ---------- card 7: learning rate ---------- */
+(function(){
+  var P=parabola($("p7")),s=$("lr7"),sv=$("lr7v"),ro=$("ro7");
+  function up(){
+    var lr=+s.value;sv.textContent=lr.toFixed(2);P.reset();
+    var w=1,pts=[];for(var k=0;k<7;k++){pts.push([w,L1(w)]);w=w-lr*S1(w)}
+    for(var i=1;i<pts.length;i++)P.line(pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1],"ln-path");
+    pts.forEach(function(p,i){P.dot(p[0],p[1],i?"d-acc":"d-ink",i?3.5:5.5)});
+    var fct=1-8*lr,msg;
+    if(Math.abs(lr-0.125)<1e-9)msg="Exactly one step to the bottom (a lucky coincidence that only happens in a toy).";
+    else if(fct>0.5)msg="Too small: safe, but slow.";
+    else if(fct>=0)msg="About right: smooth and fast.";
+    else if(fct>-1)msg="Overshoots and zig-zags across the bottom, but still settles.";
+    else if(Math.abs(fct+1)<1e-9)msg="Bounces between the same two points forever.";
+    else msg="Too big: every step overshoots by more than the last, and the loss explodes.";
+    ro.innerHTML="loss per step: "+pts.slice(0,6).map(function(p){return p[1]<1e5?f(p[1]):"huge"}).join(" → ")+"<br><b>"+msg+"</b>";
+  }
+  s.addEventListener("input",up);up();
+})();
+
+/* ---------- card 8: two knobs ---------- */
+(function(){
+  var svg=$("p8"),ro=$("ro8"),W=360,H=306,ml=30,mr=10,mt=10,mb=30,u=40,lr=0.1;
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  var bTop=(H-mt-mb)/u/2;
+  var X=function(w){return ml+(w+1)*u}, Y=function(b){return mt+(bTop-b)*u};
+  var iX=function(px){return (px-ml)/u-1}, iY=function(py){return bTop-(py-mt)/u};
+  var L=function(w,b){return (Math.pow(w+b-3,2)+Math.pow(2*w+b-6,2))/2};
+  var G=function(w,b){var e1=w+b-3,e2=2*w+b-6;return[e1+2*e2,e1+e2]};
+  var defs=el("defs",null,svg),id="cp8";
+  el("rect",{x:ml,y:mt,width:W-ml-mr,height:H-mt-mb},el("clipPath",{id:id},defs));
+  var mk=el("marker",{id:"ar8",viewBox:"0 0 10 10",refX:"8",refY:"5",markerWidth:"6",markerHeight:"6",orient:"auto-start-reverse"},defs);
+  el("path",{d:"M0 0L10 5L0 10z","class":"d-acc"},mk);
+  el("rect",{x:ml,y:mt,width:W-ml-mr,height:H-mt-mb,fill:"none","class":"grid"},svg);
+  for(var w=0;w<=6;w++)tx({x:X(w),y:H-mb+15,"class":"tick","text-anchor":"middle"},svg,String(w));
+  for(var b=-3;b<=3;b++)tx({x:ml-6,y:Y(b)+4,"class":"tick","text-anchor":"end"},svg,b<0?"−"+(-b):String(b));
+  tx({x:(ml+W-mr)/2,y:H-4,"class":"axl","text-anchor":"middle"},svg,"w");
+  tx({x:ml-20,y:mt+(H-mt-mb)/2,"class":"axl","text-anchor":"middle"},svg,"b");
+  var cg=el("g",{"clip-path":"url(#"+id+")"},svg);
+  var l1=(7+Math.sqrt(45))/2,l2=(7-Math.sqrt(45))/2;
+  function nv(a,c){var n=Math.hypot(a,c);return[a/n,c/n]}
+  var v1=nv(3,l1-5),v2=nv(3,l2-5);
+  [0.25,1,2.5,5,10,20,40,80].forEach(function(c){var d="";for(var i=0;i<=180;i++){var t=i/180*2*Math.PI,a=Math.sqrt(2*c/l1)*Math.cos(t),bb=Math.sqrt(2*c/l2)*Math.sin(t);
+    var ww=3+a*v1[0]+bb*v2[0],b2=a*v1[1]+bb*v2[1];d+=(i?"L":"M")+X(ww).toFixed(1)+" "+Y(b2).toFixed(1)}el("path",{d:d+"Z","class":"contour"},cg)});
+  el("circle",{cx:X(3),cy:Y(0),r:4.5,"class":"d-ink"},cg);
+  var dyn=el("g",{"clip-path":"url(#"+id+")"},svg);
+  var start=[1,0],path=[],timer=null;
+  function draw(){
+    clear(dyn);var s=start,g=G(s[0],s[1]);
+    el("line",{x1:X(s[0]),y1:Y(s[1]),x2:X(s[0]-lr*g[0]),y2:Y(s[1]-lr*g[1]),"class":"ln-acc","marker-end":"url(#ar8)"},dyn);
+    if(path.length>1){var d="";path.forEach(function(p,i){d+=(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)});el("path",{d:d,"class":"ln-path"},dyn)}
+    el("circle",{cx:X(s[0]),cy:Y(s[1]),r:5,"class":"d-hollow"},dyn);
+    var c=path[path.length-1];el("circle",{cx:X(c[0]),cy:Y(c[1]),r:4.5,"class":"d-acc"},dyn);
+    var n=path.length-1;
+    ro.innerHTML="start: w = "+f(s[0])+", b = "+f(s[1])+", loss "+f(L(s[0],s[1]))+", gradient ("+f(g[0])+", "+f(g[1])+")"+
+      "<br>step "+n+": w = "+f(c[0])+", b = "+f(c[1])+", loss = <b>"+f(L(c[0],c[1]))+"</b>";
+  }
+  function stop(){if(timer){clearInterval(timer);timer=null}}
+  function step(){var c=path[path.length-1],g=G(c[0],c[1]);path.push([c[0]-lr*g[0],c[1]-lr*g[1]])}
+  function setStart(w,b){stop();start=[w,b];path=[[w,b]];draw()}
+  svg.addEventListener("click",function(e){
+    var pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;var m=svg.getScreenCTM();if(!m)return;var q=pt.matrixTransform(m.inverse());
+    if(q.x<ml||q.x>W-mr||q.y<mt||q.y>H-mb)return;setStart(Math.round(iX(q.x)*20)/20,Math.round(iY(q.y)*20)/20);
+  });
+  $("b8s").onclick=function(){stop();step();draw()};
+  $("b8r").onclick=function(){stop();var k=0;timer=setInterval(function(){step();draw();if(++k>=60)stop()},35)};
+  $("b8x").onclick=function(){setStart(1,0)};
+  setStart(1,0);
+})();
+
+/* ---------- card 10: backprop graph ---------- */
+(function(){
+  var svg=$("g10"),info=$("s10"),cnt=$("s10n");
+  svg.setAttribute("viewBox","0 0 360 392");svg.style.maxWidth="420px";
+  var BW=128,BH=44,cx=110,kx=278;
+  var nodes={x:[cx,30],h:[cx,140],yh:[cx,250],L:[cx,360],w1:[kx,85],w2:[kx,195],y:[kx,305]};
+  var ops={o1:[cx,85,"×","h = w₁·x"],o2:[cx,195,"×","ŷ = w₂·h"],o3:[cx,305,"( )²","L = (ŷ−y)²"]};
+  var edges={xo1:["x","o1"],o1h:["o1","h"],ho2:["h","o2"],o2yh:["o2","yh"],yho3:["yh","o3"],o3L:["o3","L"],w1o1:["w1","o1"],w2o2:["w2","o2"],yo3:["y","o3"]};
+  var E={},B={},O={},T={};
+  function pos(k){return nodes[k]||ops[k]}
+  Object.keys(edges).forEach(function(k){var a=pos(edges[k][0]),b=pos(edges[k][1]);E[k]=el("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],"class":"g-edge"},svg)});
+  Object.keys(ops).forEach(function(k){var o=ops[k];O[k]=el("circle",{cx:o[0],cy:o[1],r:16,"class":"g-op"},svg);
+    tx({x:o[0],y:o[1]+4.5,"class":"g-sym","text-anchor":"middle"},svg,o[2]);tx({x:o[0]-24,y:o[1]+4,"class":"g-s","text-anchor":"end"},svg,o[3])});
+  Object.keys(nodes).forEach(function(k){var n=nodes[k],knob=(k==="w1"||k==="w2");
+    B[k]=el("rect",{x:n[0]-BW/2,y:n[1]-BH/2,width:BW,height:BH,rx:8,"class":"g-box"+(knob?" knob":"")},svg);
+    T[k]=[tx({x:n[0],y:n[1]+5,"class":"g-v","text-anchor":"middle"},svg,""),tx({x:n[0],y:n[1]+15,"class":"g-g","text-anchor":"middle"},svg,"")]});
+  tx({x:kx,y:85-BH/2-7,"class":"g-s","text-anchor":"middle"},svg,"knob");
+  tx({x:kx,y:195-BH/2-7,"class":"g-s","text-anchor":"middle"},svg,"knob");
+  tx({x:kx,y:305-BH/2-7,"class":"g-s","text-anchor":"middle"},svg,"correct answer");
+  tx({x:cx,y:30-BH/2-6,"class":"g-s","text-anchor":"middle"},svg,"");
+  var steps=[
+    {t:"Two knobs, w₁ = 2 and w₂ = 0.5. The input is x = 1 and the correct answer is y = 3. Press Next to run the model forward.",hot:[]},
+    {t:"Forward: h = w₁ · x = 2 · 1 = 2.",hot:["x","w1","o1","h"],fe:["xo1","w1o1","o1h"]},
+    {t:"Forward: ŷ = w₂ · h = 0.5 · 2 = 1.",hot:["h","w2","o2","yh"],fe:["ho2","w2o2","o2yh"]},
+    {t:"Forward: L = (ŷ − y)² = (1 − 3)² = 4. Every value computed on the way is kept: the backward pass will need them.",hot:["yh","y","o3","L"],fe:["yho3","yo3","o3L"]},
+    {t:"Backward starts at the loss. Square rule: dL/dŷ = 2 · (ŷ − y) = 2 · (1 − 3) = −4.",hot:["L","o3","yh"],be:["o3L","yho3"]},
+    {t:"At ŷ = w₂ · h, the rate with respect to w₂ is the other input, h. So dL/dw₂ = −4 × h = −4 × 2 = −8. Knob w₂ has its slope.",hot:["yh","o2","w2"],be:["o2yh","w2o2"]},
+    {t:"Same multiplication, other input: the rate with respect to h is w₂. So dL/dh = −4 × w₂ = −4 × 0.5 = −2. This is the signal passed further back.",hot:["yh","o2","h"],be:["o2yh","ho2"]},
+    {t:"At h = w₁ · x, the rate with respect to w₁ is x. So dL/dw₁ = −2 × x = −2 × 1 = −2. Every knob now has its slope. (x is an input, not a knob, so it needs no slope.)",hot:["h","o1","w1"],be:["o1h","w1o1"]},
+    {t:"Update with lr = 0.1: w₂ = 0.5 − 0.1 × (−8) = 1.3 and w₁ = 2 − 0.1 × (−2) = 2.2. Forward again: h = 2.2, ŷ = 2.86, and the loss is 0.02 (it was 4).",hot:["w1","w2","L"],fe:["xo1","w1o1","o1h","ho2","w2o2","o2yh","yho3","yo3","o3L"]}
+  ];
+  var cur=0;
+  function setNode(k,v,g){T[k][0].textContent=v;T[k][1].textContent=g||"";T[k][0].setAttribute("y",pos(k)[1]+(g?-2:5))}
+  function up(){
+    var s=cur,st=steps[s];
+    var w1=s===8?"2.2":"2",w2=s===8?"1.3":"0.5";
+    setNode("x","x = 1");setNode("y","y = 3");
+    setNode("w1","w₁ = "+w1,s>=7&&s<8?"dL/dw₁ = −2":"");
+    setNode("w2","w₂ = "+w2,s>=5&&s<8?"dL/dw₂ = −8":"");
+    setNode("h",s>=1?"h = "+(s===8?"2.2":"2"):"h = ?",s>=6&&s<8?"dL/dh = −2":"");
+    setNode("yh",s>=2?"ŷ = "+(s===8?"2.86":"1"):"ŷ = ?",s>=4&&s<8?"dL/dŷ = −4":"");
+    setNode("L",s>=3?"L = "+(s===8?"0.02":"4"):"L = ?",s>=4&&s<8?"start here":"");
+    Object.keys(B).forEach(function(k){B[k].setAttribute("class","g-box"+((k==="w1"||k==="w2")?" knob":"")+(st.hot.indexOf(k)>=0?" hot":""))});
+    Object.keys(O).forEach(function(k){O[k].setAttribute("class","g-op"+(st.hot.indexOf(k)>=0?" hot":""))});
+    Object.keys(E).forEach(function(k){var c="g-edge";if(st.fe&&st.fe.indexOf(k)>=0)c+=" hot";if(st.be&&st.be.indexOf(k)>=0)c+=" hotb";E[k].setAttribute("class",c)});
+    var phase=s===0?"start":s<=3?"forward pass":s<=7?"backward pass":"update";
+    cnt.textContent="step "+s+" of 8 · "+phase;info.textContent=st.t;
+    $("b10n").textContent=s===8?"Start over":"Next";
+  }
+  $("b10n").onclick=function(){cur=cur===8?0:cur+1;up()};
+  $("b10p").onclick=function(){if(cur>0){cur--;up()}};
+  $("b10r").onclick=function(){cur=0;up()};
+  up();
+})();
+
+/* ---------- card 11: cost ---------- */
+(function(){
+  var box=$("m11"),bars=$("bars11"),ro=$("ro11");
+  var M=[{n:2,l:"toy (2 weights)"},{n:4.2e6,l:"tiny GPT (4.2M)"},{n:4.94e8,l:"Qwen2.5-0.5B (494M)"},{n:7e10,l:"70B model"}],cur=1,btns=[];
+  M.forEach(function(m,i){var b=document.createElement("button");b.type="button";b.textContent=m.l;b.onclick=function(){cur=i;up()};box.appendChild(b);btns.push(b)});
+  function dur(s){if(s<120)return Math.round(s)+" seconds";if(s<7200)return Math.round(s/60)+" minutes";if(s<172800)return Math.round(s/3600)+" hours";if(s<2*365.25*86400)return Math.round(s/86400).toLocaleString("en-US")+" days";return Math.round(s/(365.25*86400)).toLocaleString("en-US")+" years"}
+  function up(){
+    var n=M[cur].n,nud=n+1,bp=3;btns.forEach(function(b,i){b.className=i===cur?"on":""});
+    var wd=function(v){return Math.max(2,Math.log10(v)/11*100)};
+    bars.innerHTML="<span>nudge test</span><div class='bar' style='width:"+wd(nud)+"%'></div><span>backprop</span><div class='bar acc' style='width:"+wd(bp)+"%'></div>";
+    ro.innerHTML="nudge test: <b>"+nud.toLocaleString("en-US")+"</b> (one per weight, plus the original)<br>backprop: <b class='acc'>≈ 3</b> (1 forward + 1 backward)<br>If one forward pass took a second: "+dur(nud)+" against 3 seconds.";
+  }
+  up();
+})();
+
+/* ---------- card 14: scores playground ---------- */
+(function(){
+  var words=["tea","coffee","juice"],init=[2.0,1.5,1.1],z=init.slice(),correct=1,rowsBox=$("rows14"),R=[],wb=$("c14w"),WB=[];
+  words.forEach(function(w,i){var b=document.createElement("button");b.type="button";b.textContent=w;b.onclick=function(){correct=i;up()};wb.appendChild(b);WB.push(b);
+    var row=document.createElement("div");row.className="vrow";
+    row.innerHTML="<span>"+w+"</span><input type='range' min='-4' max='6' step='0.1' aria-label='score for "+w+"'><span class='val' style='min-width:0'></span><div class='meta'><div class='pbar'><i></i></div><span class='p'></span><span class='sl acc'></span></div>";
+    rowsBox.appendChild(row);var inp=row.querySelector("input");inp.addEventListener("input",function(){z[i]=+inp.value;up(true)});
+    R.push({inp:inp,val:row.querySelector(".val"),bar:row.querySelector("i"),p:row.querySelector(".p"),sl:row.querySelector(".sl")})});
+  function probs(){var m=Math.max.apply(null,z),e=z.map(function(v){return Math.exp(v-m)}),t=e.reduce(function(a,b){return a+b},0);return e.map(function(v){return v/t})}
+  function up(fromSlider){
+    var p=probs(),sum=0;
+    WB.forEach(function(b,i){b.className=i===correct?"on":""});
+    words.forEach(function(w,i){var sl=p[i]-(i===correct?1:0);sum+=sl;var r=R[i];
+      if(!fromSlider)r.inp.value=z[i];r.val.textContent=f(z[i],1);
+      r.bar.style.width=(p[i]*100).toFixed(1)+"%";r.bar.className=i===correct?"acc":"";
+      r.p.textContent="P = "+p[i].toFixed(2);
+      r.sl.textContent="slope "+fs(sl)+(Math.abs(sl)<0.005?"":(sl<0?"  ↑":"  ↓"));});
+    $("loss14").innerHTML="loss = −ln "+p[correct].toFixed(2)+" = <span class='acc'>"+f(-Math.log(p[correct]))+"</span> nats";
+    $("sum14").textContent="slopes sum to "+f(Math.abs(sum)<1e-9?0:sum);
+  }
+  $("b14s").onclick=function(){var p=probs();z=z.map(function(v,i){return Math.max(-4,Math.min(6,v-(p[i]-(i===correct?1:0))))});up()};
+  $("b14r").onclick=function(){z=init.slice();correct=1;up()};
+  up();
+})();
+
+/* ---------- navigation ---------- */
+(function(){
+  var cards=[].slice.call(document.querySelectorAll(".card")),n=cards.length,cur=0,dots=$("dots"),D=[];
+  cards.forEach(function(c,i){var d=document.createElement("button");d.type="button";d.className="dot";d.setAttribute("aria-label","Card "+(i+1));d.onclick=function(){go(i)};dots.appendChild(d);D.push(d)});
+  function go(i,noHash){
+    cur=Math.max(0,Math.min(n-1,i));
+    cards.forEach(function(c,k){c.classList.toggle("active",k===cur)});
+    D.forEach(function(d,k){d.classList.toggle("on",k===cur)});
+    $("count").textContent=(cur+1)+" / "+n;
+    $("prev").disabled=false;$("next").disabled=false;
+    $("prev").style.visibility=cur===0?"hidden":"visible";$("next").style.visibility=cur===n-1?"hidden":"visible";
+    if(!noHash){try{history.replaceState(null,"","#"+(cur+1))}catch(e){}}
+  }
+  $("prev").onclick=function(){go(cur-1);scrollToCard()};
+  $("next").onclick=function(){go(cur+1);scrollToCard()};
+  function scrollToCard(){var t=$("cards").getBoundingClientRect().top;if(t<0)window.scrollBy({top:t-12,behavior:"smooth"})}
+  document.addEventListener("keydown",function(e){
+    if(document.body.classList.contains("all"))return;
+    var t=e.target;if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"))return;
+    if(e.key==="ArrowRight"||e.key==="PageDown"){go(cur+1);e.preventDefault()}
+    else if(e.key==="ArrowLeft"||e.key==="PageUp"){go(cur-1);e.preventDefault()}
+  });
+  var sx=null,sy=null;
+  $("cards").addEventListener("touchstart",function(e){var t=e.target;if(t.closest&&t.closest("svg,input,button")){sx=null;return}sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  $("cards").addEventListener("touchend",function(e){if(sx===null||document.body.classList.contains("all"))return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;
+    if(Math.abs(dx)>60&&Math.abs(dy)<45){go(cur+(dx<0?1:-1));}},{passive:true});
+  $("allbtn").onclick=function(){var on=document.body.classList.toggle("all");this.textContent=on?"One card at a time":"Show all cards";if(!on)go(cur)};
+  var h=parseInt((location.hash||"").replace("#",""),10);go(isNaN(h)?0:h-1,true);
+})();
+})();
+</script>
+</body>
+</html>
