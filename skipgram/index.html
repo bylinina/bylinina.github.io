@@ -139,9 +139,9 @@ svg text{paint-order:stroke;stroke:var(--panel);stroke-width:4px;font:600 16px F
 
 <script>
 {
-const EX=["My cat is a furry pet.","The vet checked my cat.","My dog is a furry pet.","The vet checked my dog.","I drive my car on the road.","My car has a loud engine.","I drive my truck on the road.","My truck has a loud engine."];
+const EX=["The telescope spotted a distant planet.","Astronomers named the planet.","The telescope spotted a distant comet.","Astronomers named the comet.","The crowd watched an exciting match.","Our team won the match.","The crowd watched an exciting game.","Our team won the game."];
 const STOP=["a","an","the","is","of","to","on","for","and","in","into","at","by","with","this","that","it","its","my","our","i","has","have","had","was","were","be","are"];
-const WIN=2,K=2,LR=0.1,D=5,FIRST=594,RUNS=100;
+const WIN=2,K=2,LR=0.1,D=5,FIRST=1115,RUNS=100;
 let docs=EX.slice(),V=[],T=[],pairs=[],cdf=[],W=[],C=[],rng=null,seed=FIRST,ptr=0,pass=0,last=null,timer=null,prevComps=null,pick="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -162,7 +162,7 @@ function compute(){
   pairs=[];T.forEach(t=>t.forEach((w,i)=>{for(let j=Math.max(0,i-WIN);j<=Math.min(t.length-1,i+WIN);j++)if(j!==i)pairs.push([ix[w],ix[t[j]]])}));
   const cnt=V.map(()=>0);T.flat().forEach(w=>cnt[ix[w]]++);
   const pn=cnt.map(c=>Math.pow(c,0.75)),Z=pn.reduce((a,b)=>a+b,0);let acc=0;cdf=pn.map(p=>(acc+=p)/Z);
-  if(!V.includes(pick))pick=V.includes("cat")?"cat":(V[0]||"");
+  if(!V.includes(pick))pick=V.includes("planet")?"planet":(V[0]||"");
   $("pick").innerHTML=V.map(w=>`<option${w===pick?" selected":""}>${esc(w)}</option>`).join("");
   drawCooc();
 }
