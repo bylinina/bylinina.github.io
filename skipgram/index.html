@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skip-gram with negative sampling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday teaching tool, calm and exact (sibling of /tfidf-kmeans/ and /lda/)
+   IDEA a metro line: four stations from sentences to similar words
+   PICTURE word vectors on a map, moving as real pairs pull and random pairs push
+   COLOUR white ground, ink black, green metro line; blue for word vectors and real pairs, red for random pairs
+   TYPE Figtree 800 for headings, Figtree for text
+   LAYOUT stacked bands, one per station; map and step panel side by side above 900px, stacked below */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1116);--ink:light-dark(#111111,#eef0f3);--soft:light-dark(#5b6068,#a3a9b3);--rule:light-dark(#e3e5e8,#262b33);--panel:light-dark(#f5f6f8,#161a21);--line:light-dark(#00a05a,#2bc27e);--pos:light-dark(#0a5cff,#5b93ff);--neg:light-dark(#e6261f,#ff6a5f)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Figtree,system-ui,sans-serif;overflow-x:clip}
+h1,h2{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0}
+h1{font-size:clamp(32px,5vw,48px);text-wrap:balance}
+h2{font-size:clamp(24px,3vw,30px)}
+p{margin:.4em 0;max-width:70ch}
+.band{padding:clamp(24px,4vw,48px) max(5vw,16px);border-top:1px solid var(--rule)}
+.wrap{max-width:1240px;margin:0 auto}
+.metro{display:flex;flex-wrap:wrap;gap:0;margin-top:22px;position:relative}
+.metro a{flex:1 1 140px;position:relative;padding:30px 8px 0 0;color:var(--ink);text-decoration:none;font-weight:600}
+.metro a::before{content:"";position:absolute;left:0;right:0;top:9px;height:6px;background:var(--line)}
+.metro a::after{content:"";position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;background:var(--bg);border:5px solid var(--line)}
+.metro a:last-child::before{right:auto;width:20px}
+.metro a:hover{text-decoration:underline}
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.dot{width:20px;height:20px;border-radius:50%;border:5px solid var(--line);flex:none}
+button,select{font:600 15px Figtree,system-ui,sans-serif;min-height:44px;padding:0 16px;border-radius:8px;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer}
+button:hover{background:var(--panel)}
+button:focus-visible,select:focus-visible,input[type=text]:focus-visible{outline:3px solid var(--pos);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.docs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
+.doc{background:var(--panel);border-radius:10px;padding:12px}
+.doc label{font-weight:800;font-size:14px}
+.doc input{width:100%;font:16px Figtree,system-ui,sans-serif;padding:9px 10px;border:1.5px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink);margin:6px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;min-height:26px}
+.chip{font-size:13px;padding:2px 9px;border-radius:99px;background:var(--bg);border:1px solid var(--rule)}
+.empty{font-size:13px;color:var(--soft)}
+.small{font-size:14px;color:var(--soft)}
+.scroll{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--bg);font-weight:800}
+thead th{font-weight:600;color:var(--soft)}
+#cooc td.z{color:var(--rule)}
+#status{font-size:18px;font-weight:600;min-height:56px;margin:6px 0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;margin-top:8px;align-items:start}
+.fig{position:relative;min-height:400px;background:var(--panel);border-radius:10px}
+.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+svg text{paint-order:stroke;stroke:var(--panel);stroke-width:4px;font:600 14px Figtree,system-ui,sans-serif}
+.calc{background:var(--panel);border-radius:10px;padding:14px 16px}
+.calc h3{margin:0 0 4px;font-size:20px;font-weight:800}
+.calc table{width:100%;margin-top:8px}
+.calc th,.calc td{text-align:left;white-space:normal}
+.calc td:first-child,.calc th:first-child{position:static;background:none}
+.lab1{color:var(--pos);font-weight:800}.lab0{color:var(--neg);font-weight:800}
+.stat{font-size:15px;margin-top:10px}
+.bar{display:grid;grid-template-columns:6.5em minmax(0,1fr) minmax(0,1fr) 3.4em;gap:0;align-items:center;font-size:15px;margin:3px 0}
+.bar .l{display:flex;justify-content:flex-end;border-right:1.5px solid var(--soft);height:16px;align-items:center}
+.bar .r{display:flex;justify-content:flex-start;height:16px;align-items:center}
+.bar .t{height:14px;border-radius:3px}
+.bar .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--soft)}
+.note{background:var(--panel);border-radius:8px;padding:10px 12px;font-size:15px;margin-top:10px}
+.never td:nth-child(2){color:var(--soft)}
+.never td:last-child{font-weight:800}
+@media(max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}.docs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.metro a{flex:1 1 0;font-size:14px;line-height:1.25}}
+@media(max-width:560px){.docs{grid-template-columns:minmax(0,1fr)}.fig{min-height:320px}th,td{padding:6px 5px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="band" style="border-top:0">
+<div class="wrap">
+<h1>Skip-gram with negative sampling</h1>
+<nav class="metro" aria-label="Steps">
+<a href="#docs">Sentences</a><a href="#pairs">Training pairs</a><a href="#train">Training</a><a href="#similar">Similar words</a>
+</nav>
+</div>
+</header>
+
+<section class="band" id="docs"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>Sentences</h2></div>
+<p>Each sentence is lowercased, split into words, and stripped of stop words.</p>
+<div class="docs" id="docList"></div>
+<div class="row"><button id="resetDocs" type="button">Restore example sentences</button></div>
+</div></section>
+
+<section class="band" id="pairs"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>Training pairs</h2></div>
+<p>Every word is paired with each word up to 2 positions away in its sentence. Each cell counts how often a pair occurs: that is how many real examples it gives per pass over the corpus. Every real example also gets k = 2 random examples: the same word with random words, drawn in proportion to frequency<sup>0.75</sup>.</p>
+<div class="scroll"><table id="cooc"></table></div>
+<p class="small">Rows = word; columns = word in its window.</p>
+</div></section>
+
+<section class="band" id="train"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>Training</h2></div>
+<p>Every word starts with two random vectors of 5 numbers: one for when it is the word in the middle (w), one for when it is in someone else's window (c). The probability that a pair is real is σ(c · w). Each step pulls a real pair together and pushes its random pairs apart.</p>
+<div class="row">
+<button id="one" type="button">One training step</button>
+<button id="pass" type="button">One pass over the corpus</button>
+<button id="run" type="button">Train 100 passes</button>
+<button id="rand" type="button">New random start</button>
+<button id="reset" type="button">Back to the first start</button>
+</div>
+<p id="status" aria-live="polite"></p>
+<div class="grid2">
+<div><div class="fig"><svg id="map" role="img" aria-label="Word vectors on a two-dimensional map"></svg></div>
+<p class="small">The map squeezes the 5 dimensions of each word's w vector into two, just for display. Similarities are computed in the full space.</p></div>
+<div><div class="calc" id="calc" aria-live="polite"></div>
+<p class="stat" id="stat"></p></div>
+</div>
+</div></section>
+
+<section class="band" id="similar"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>Similar words</h2></div>
+<p>After training, words are compared by the angle between their w vectors (cosine similarity: 1 = same direction, 0 = unrelated).</p>
+<div class="grid2">
+<div>
+<div class="row"><label for="pick" style="font-weight:600">Word</label><select id="pick"></select></div>
+<div id="nn"></div>
+</div>
+<div>
+<p class="sub" style="font-weight:600;margin-top:12px">Similar, but never in each other's window</p>
+<div class="scroll" style="margin-top:4px"><table class="never" id="never"></table></div>
+<p class="small">Pairs of words that never occur within 2 positions of each other but share at least 3 window words. Their vectors end up close because the same context vectors pull on both.</p>
+</div>
+</div>
+</div></section>
+
+<script>
+{
+const EX=["My cat is a furry pet.","The vet checked my cat.","My dog is a furry pet.","The vet checked my dog.","I drive my car on the road.","My car has a loud engine.","I drive my truck on the road.","My truck has a loud engine."];
+const STOP=["a","an","the","is","of","to","on","for","and","in","into","at","by","with","this","that","it","its","my","our","i","has","have","had","was","were","be","are"];
+const WIN=2,K=2,LR=0.1,D=5,FIRST=594,RUNS=100;
+let docs=EX.slice(),V=[],T=[],pairs=[],cdf=[],W=[],C=[],rng=null,seed=FIRST,ptr=0,pass=0,last=null,timer=null,prevComps=null,pick="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tok=s=>(s.toLowerCase().match(/[a-z]+/g)||[]).filter(w=>!STOP.includes(w));
+const sig=x=>1/(1+Math.exp(-x)),dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0),nrm=a=>Math.hypot(...a);
+const cos=(a,b)=>{const n=nrm(a)*nrm(b);return n?dot(a,b)/n:0};
+const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function buildDocs(){
+  $("docList").innerHTML=docs.map((d,i)=>`<div class="doc"><label for="doc${i}">s${i+1}</label><input type="text" id="doc${i}" value="${esc(d)}"><div class="chips" id="chips${i}"></div></div>`).join("");
+  docs.forEach((_,i)=>$("doc"+i).addEventListener("input",e=>{docs[i]=e.target.value;compute();start(seed)}));
+}
+function compute(){
+  T=docs.map(tok);
+  T.forEach((t,i)=>{$("chips"+i).innerHTML=t.length?t.map(w=>`<span class="chip">${esc(w)}</span>`).join(""):'<span class="empty">No words left</span>'});
+  V=[...new Set(T.flat())].sort();const ix=Object.fromEntries(V.map((w,i)=>[w,i]));
+  pairs=[];T.forEach(t=>t.forEach((w,i)=>{for(let j=Math.max(0,i-WIN);j<=Math.min(t.length-1,i+WIN);j++)if(j!==i)pairs.push([ix[w],ix[t[j]]])}));
+  const cnt=V.map(()=>0);T.flat().forEach(w=>cnt[ix[w]]++);
+  const pn=cnt.map(c=>Math.pow(c,0.75)),Z=pn.reduce((a,b)=>a+b,0);let acc=0;cdf=pn.map(p=>(acc+=p)/Z);
+  if(!V.includes(pick))pick=V.includes("cat")?"cat":(V[0]||"");
+  $("pick").innerHTML=V.map(w=>`<option${w===pick?" selected":""}>${esc(w)}</option>`).join("");
+  drawCooc();
+}
+function cooc(){const M=V.map(()=>V.map(()=>0));pairs.forEach(([t,c])=>M[t][c]++);return M}
+function drawCooc(){
+  if(!V.length){$("cooc").innerHTML="<tbody><tr><td>No words in any sentence yet.</td></tr></tbody>";return}
+  const M=cooc();
+  $("cooc").innerHTML=`<thead><tr><th></th>${V.map(w=>`<th scope="col">${esc(w)}</th>`).join("")}</tr></thead><tbody>`+
+    M.map((r,i)=>`<tr><td>${esc(V[i])}</td>${r.map(v=>`<td class="${v?"":"z"}" style="${v?`background:color-mix(in srgb,var(--pos) ${Math.min(60,20*v)}%,transparent)`:""}">${v||"·"}</td>`).join("")}</tr>`).join("")+"</tbody>";
+}
+function start(s){
+  stop();seed=s;rng=mulberry32(s);
+  W=V.map(()=>Array.from({length:D},()=>rng()-0.5));C=V.map(()=>Array.from({length:D},()=>rng()-0.5));
+  ptr=0;pass=0;last=null;prevComps=null;
+  render(V.length?"Start: every vector is random, so every pair gets a probability of about 0.5.":"Type some words into the sentences first.");
+}
+function drawNoise(){const u=rng();let i=0;while(i<cdf.length-1&&cdf[i]<u)i++;return i}
+// one real pair and its K random pairs; this is the whole learning rule
+function step(record){
+  const [t,c]=pairs[ptr];const negs=[];while(negs.length<K){const n=drawNoise();if(n!==c||V.length<2)negs.push(n);if(V.length<2)break}
+  const w=W[t].slice(),g=Array(D).fill(0),rows=[];
+  const upd=(ci,lab)=>{const s=dot(C[ci],w),p=sig(s),e=lab-p;rows.push({ci,lab,s,p});for(let d=0;d<D;d++){g[d]+=e*C[ci][d];C[ci][d]+=LR*e*w[d]}};
+  upd(c,1);negs.forEach(n=>upd(n,0));
+  for(let d=0;d<D;d++)W[t][d]+=LR*g[d];
+  if(record)last={t,rows:rows.map(r=>({...r,p2:sig(dot(C[r.ci],W[t]))}))};
+  ptr++;if(ptr>=pairs.length){ptr=0;pass++}
+}
+function sweep(){for(let i=0;i<pairs.length;i++)step(false);last=null}
+function stop(){clearInterval(timer);timer=null;$("run").textContent=`Train ${RUNS} passes`}
+function avgP(){
+  if(!pairs.length)return [0,0];
+  const real=pairs.reduce((s,[t,c])=>s+sig(dot(C[c],W[t])),0)/pairs.length;
+  const pn=cdf.map((v,i)=>v-(i?cdf[i-1]:0));
+  const rand=pairs.reduce((s,[t])=>s+pn.reduce((a,p,ci)=>a+p*sig(dot(C[ci],W[t])),0),0)/pairs.length;
+  return [real,rand];
+}
+function render(msg){
+  if(msg!==undefined)$("status").textContent=msg;
+  drawMap();drawCalc();drawSimilar();
+  if(!V.length){$("stat").textContent="";return}
+  const [a,b]=avgP();
+  const nv=neverPairs().slice(0,3);
+  $("stat").innerHTML=`Passes over the corpus: ${pass}. Average P(real): <span class="lab1">${a.toFixed(2)}</span> for real pairs, <span class="lab0">${b.toFixed(2)}</span> for random pairs.`+
+    (nv.length?`<br>Similarity of words that are never in each other's window: ${nv.map(r=>`${esc(r[0])} – ${esc(r[1])} <b>${r[3].toFixed(2)}</b>`).join(", ")}.`:"");
+}
+function pca(){
+  const n=W.length,m=W[0].map((_,d)=>W.reduce((s,r)=>s+r[d],0)/n),X=W.map(r=>r.map((v,d)=>v-m[d]));
+  const cov=[...Array(D)].map((_,a)=>[...Array(D)].map((_,b)=>X.reduce((s,r)=>s+r[a]*r[b],0)));
+  const comps=[];
+  for(let k=0;k<2;k++){let v=[...Array(D)].map((_,i)=>Math.sin(i*7.1+k*3.3+1));
+    for(let it=0;it<200;it++){let u=cov.map(row=>row.reduce((s,x,i)=>s+x*v[i],0));comps.forEach(p=>{const q=dot(u,p);u=u.map((x,i)=>x-q*p[i])});const nn=nrm(u);if(!nn)break;v=u.map(x=>x/nn)}
+    if(prevComps&&dot(v,prevComps[k])<0)v=v.map(x=>-x);comps.push(v)}
+  prevComps=comps;
+  return W.map(r=>comps.map(p=>dot(r.map((v,d)=>v-m[d]),p)));
+}
+const ro=new ResizeObserver(()=>drawMap());ro.observe($("map"));
+function drawMap(){
+  const s=$("map"),Wd=s.clientWidth,H=s.clientHeight;
+  if(!Wd||V.length<2){s.innerHTML="";return}
+  const P=pca(),xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),pad=50;
+  const r=Math.max(...xs.map(Math.abs),...ys.map(Math.abs),0.001);
+  const sx=v=>Wd/2+v/r*(Wd/2-pad),sy=v=>H/2-v/r*(H/2-pad);
+  const hi=last?new Set([last.t,...last.rows.map(x=>x.ci)]):new Set();
+  let h=`<line x1="${Wd/2}" y1="14" x2="${Wd/2}" y2="${H-14}" stroke="var(--rule)"/><line x1="14" y1="${H/2}" x2="${Wd-14}" y2="${H/2}" stroke="var(--rule)"/>`;
+  const placed=[];
+  P.map((p,i)=>[sx(p[0]),sy(p[1]),i]).sort((a,b)=>a[1]-b[1]).forEach(([x,y,i])=>{
+    let ly=y+5;placed.forEach(q=>{if(Math.abs(q[0]-x)<62&&Math.abs(q[1]-ly)<17)ly=q[1]+17});placed.push([x,ly]);
+    const isT=last&&i===last.t,col=isT?"var(--pos)":"var(--ink)";
+    h+=`<circle cx="${x}" cy="${y}" r="${isT?8:6}" fill="${col}"/><text x="${x+11}" y="${ly}" fill="${col}">${esc(V[i])}</text>`;
+  });
+  s.innerHTML=h;
+}
+function drawCalc(){
+  if(!last){$("calc").innerHTML=`<h3>One training step</h3><p class="small" style="margin:0">Press One training step to see a real pair and its ${K} random pairs: each pair's score c · w, its probability σ(c · w), and how one update changes it.</p>`;return}
+  const t=esc(V[last.t]);
+  $("calc").innerHTML=`<h3>Target word: ${t}</h3>
+  <table><thead><tr><th>pair</th><th>label</th><th>score c · w</th><th>P(real), before → after</th></tr></thead><tbody>
+  ${last.rows.map(r=>`<tr><td>(${t}, ${esc(V[r.ci])})</td><td class="${r.lab?"lab1":"lab0"}">${r.lab}</td><td>${r.s.toFixed(2)}</td><td>${r.p.toFixed(2)} → <b class="${r.lab?"lab1":"lab0"}">${r.p2.toFixed(2)}</b></td></tr>`).join("")}
+  </tbody></table>
+  <p class="small">Real pair (label 1): w<sub>${t}</sub> and c<sub>${esc(V[last.rows[0].ci])}</sub> are pulled towards each other, by 1 − P. Random pairs (label 0): pushed apart, by P.</p>`;
+}
+function neverPairs(){
+  const M=cooc(),rows=[];
+  for(let a=0;a<V.length;a++)for(let b=a+1;b<V.length;b++){
+    if(M[a][b]||M[b][a])continue;
+    const sh=V.filter((_,c)=>c!==a&&c!==b&&M[a][c]&&M[b][c]);
+    if(sh.length>=3)rows.push([V[a],V[b],sh,cos(W[a],W[b])]);
+  }
+  return rows.sort((x,y)=>y[2].length-x[2].length||x[0].localeCompare(y[0]));
+}
+function drawSimilar(){
+  if(V.length<2){$("nn").innerHTML="";$("never").innerHTML="";return}
+  const i=V.indexOf(pick);
+  if(i>=0){const list=V.map((w,j)=>[w,cos(W[i],W[j])]).filter((_,j)=>j!==i).sort((a,b)=>b[1]-a[1]);
+    $("nn").innerHTML=list.map(([w,v])=>`<div class="bar"><span>${esc(w)}</span><span class="l">${v<0?`<span class="t" style="width:${Math.max(1,-v*100)}%;background:var(--soft)"></span>`:""}</span><span class="r">${v>0?`<span class="t" style="width:${Math.max(1,v*100)}%;background:var(--pos)"></span>`:""}</span><span class="v">${v.toFixed(2)}</span></div>`).join("")}
+  const rows=neverPairs();
+  $("never").innerHTML=rows.length?`<thead><tr><th>pair</th><th>times in each other's window</th><th>shared window words</th><th>similarity</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr><td>${esc(r[0])} – ${esc(r[1])}</td><td>0</td><td style="white-space:normal;text-align:left">${r[2].map(esc).join(", ")}</td><td>${r[3].toFixed(2)}</td></tr>`).join("")+"</tbody>":`<tbody><tr><td style="font-weight:400;color:var(--soft)">No such pairs in these sentences.</td></tr></tbody>`;
+}
+$("pick").addEventListener("change",e=>{pick=e.target.value;drawSimilar()});
+$("one").onclick=()=>{stop();if(!pairs.length)return;step(true);const r=last.rows[0];render(`Real pair (${V[last.t]}, ${V[r.ci]}): P(real) went from ${r.p.toFixed(2)} to ${r.p2.toFixed(2)}.`)};
+$("pass").onclick=()=>{stop();if(!pairs.length)return;sweep();render(`One pass: every real pair (${pairs.length} of them) was used once, each with ${K} random pairs.`)};
+$("run").onclick=()=>{
+  if(timer){stop();render(`Stopped after ${pl(pass,"pass")}.`);return}
+  if(!pairs.length)return;let done=0;$("run").textContent="Stop";
+  timer=setInterval(()=>{for(let i=0;i<2&&done<RUNS;i++){sweep();done++}
+    if(done>=RUNS){stop();render(`Done: ${RUNS} more passes.`)}else render(`Training: pass ${done} of ${RUNS}.`)},40);
+};
+$("rand").onclick=()=>start((Math.random()*2147483646|0)+1);
+$("reset").onclick=()=>start(FIRST);
+$("resetDocs").onclick=()=>{docs=EX.slice();buildDocs();compute();start(FIRST)};
+buildDocs();compute();start(FIRST);
+}
+</script>
+</body>
+</html>
