@@ -9,12 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 /* VOICE everyday teaching tool, calm and exact (sibling of /tfidf-kmeans/)
-   IDEA a metro line: four stations from sentences to topics and topic mixes
+   IDEA a metro line: five stations from sentences to topics, words and topic mixes
    PICTURE every word instance as a coloured chip that changes colour as it is re-guessed
-   COLOUR white ground, ink black, green metro line; topics orange / purple / blue, matching the lecture slides
+   COLOUR white ground, ink black, green metro line; topics orange / purple, matching the lecture slides
    TYPE Figtree 800 for headings, Figtree for text
    LAYOUT stacked bands, one per station; words and the re-guess panel side by side above 900px, stacked below */
-:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1116);--ink:light-dark(#111111,#eef0f3);--soft:light-dark(#5b6068,#a3a9b3);--rule:light-dark(#e3e5e8,#262b33);--panel:light-dark(#f5f6f8,#161a21);--line:light-dark(#00a05a,#2bc27e);--focus:light-dark(#0a5cff,#5b93ff);--t0:light-dark(#d97a1c,#f0a14a);--t1:light-dark(#8e7cc3,#ab9be3);--t2:light-dark(#2f7ed8,#5b9cf0)}
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1116);--ink:light-dark(#111111,#eef0f3);--soft:light-dark(#5b6068,#a3a9b3);--rule:light-dark(#e3e5e8,#262b33);--panel:light-dark(#f5f6f8,#161a21);--line:light-dark(#00a05a,#2bc27e);--focus:light-dark(#0a5cff,#5b93ff);--t0:light-dark(#d97a1c,#f0a14a);--t1:light-dark(#8e7cc3,#ab9be3)}
 :root[data-theme=light]{color-scheme:light}
 :root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
@@ -34,17 +34,10 @@ p{margin:.4em 0;max-width:70ch}
 .metro a:hover{text-decoration:underline}
 .sh{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .dot{width:20px;height:20px;border-radius:50%;border:5px solid var(--line);flex:none}
-button,.seg label{font:600 15px Figtree,system-ui,sans-serif;min-height:44px;padding:0 16px;border-radius:8px;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer}
+button{font:600 15px Figtree,system-ui,sans-serif;min-height:44px;padding:0 16px;border-radius:8px;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer}
 button:hover{background:var(--panel)}
-button:focus-visible,.seg input:focus-visible+span,input[type=text]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button:focus-visible,input[type=text]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
-.lbl{font-weight:600;margin-right:4px}
-.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden}
-.seg label{border:0;border-radius:0;display:flex;align-items:center;padding:0;min-height:42px}
-.seg label+label{border-left:1.5px solid var(--ink)}
-.seg input{position:absolute;opacity:0;pointer-events:none}
-.seg span{padding:0 16px;display:flex;align-items:center;height:100%}
-.seg input:checked+span{background:var(--ink);color:var(--bg)}
 .docs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
 .doc{background:var(--panel);border-radius:10px;padding:12px}
 .doc label{font-weight:800;font-size:14px}
@@ -65,8 +58,8 @@ button:focus-visible,.seg input:focus-visible+span,input[type=text]:focus-visibl
 .w{min-height:36px;padding:0 12px;font:600 15px Figtree,system-ui,sans-serif;border-radius:8px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 24%,var(--bg));color:var(--ink);transition:background .25s,border-color .25s}
 .w:hover{background:color-mix(in srgb,var(--c) 40%,var(--bg))}
 .w.cur{outline:3px solid var(--ink);outline-offset:2px}
-.calc{background:var(--panel);border-radius:10px;padding:14px 16px;min-height:200px}
-.calc .ph{color:var(--soft);margin:0}
+.calc{background:var(--panel);border-radius:10px;padding:14px 16px}
+.calc[hidden]{display:none}
 .calc h3{margin:0 0 2px;font-size:20px;font-weight:800}
 table{border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums;width:100%;margin-top:10px}
 th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:middle}
@@ -89,6 +82,10 @@ td.tp{font-weight:800;white-space:nowrap}
 .stack{display:flex;height:30px;border-radius:6px;overflow:hidden;background:var(--panel)}
 .seg2{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--c) 45%,var(--bg));border-right:2px solid var(--bg);white-space:nowrap;overflow:hidden;transition:width .25s}
 .seg2:last-child{border-right:0}
+.vocab{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:8px 28px;margin-top:12px}
+.vrow{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:8px;align-items:center}
+.vw{font-size:15px}
+.vrow .stack{height:26px}
 .mwords{font-size:14px;color:var(--soft);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 10px}
 .mwords span{border-bottom:3px solid var(--c);line-height:1.3}
 @media(max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}.docs{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -102,7 +99,7 @@ td.tp{font-weight:800;white-space:nowrap}
 <div class="wrap">
 <h1>Topic modelling with LDA</h1>
 <nav class="metro" aria-label="Steps">
-<a href="#docs">Documents</a><a href="#assign">Topic assignments</a><a href="#topics">Topics</a><a href="#mixes">Topic mixes</a>
+<a href="#docs">Documents</a><a href="#assign">Topic assignments</a><a href="#topics">Topics</a><a href="#vocab">Vocabulary</a><a href="#mixes">Topic mixes</a>
 </nav>
 </div>
 </header>
@@ -117,14 +114,7 @@ td.tp{font-weight:800;white-space:nowrap}
 <section class="band" id="assign"><div class="wrap">
 <div class="sh"><span class="dot"></span><h2>Topic assignments</h2></div>
 <p>Every word instance belongs to one topic. We start from a random assignment and re-guess one word at a time.</p>
-<div class="row">
-<span class="lbl" id="kLbl">Number of topics</span>
-<div class="seg" role="radiogroup" aria-labelledby="kLbl">
-<label><input type="radio" name="k" value="2" checked><span>2</span></label>
-<label><input type="radio" name="k" value="3"><span>3</span></label>
-</div>
-<span class="small">α = 0.1, η = 0.01</span>
-</div>
+<p class="small">2 topics, α = 0.1, η = 0.01</p>
 <div class="row">
 <button id="one" type="button">Re-guess one word</button>
 <button id="pass" type="button">Re-guess every word once</button>
@@ -139,7 +129,7 @@ td.tp{font-weight:800;white-space:nowrap}
 <div id="assignDocs"></div>
 <p class="small">Click any word to re-guess it.</p>
 </div>
-<div class="calc" id="calc" aria-live="polite"></div>
+<div class="calc" id="calc" aria-live="polite" hidden></div>
 </div>
 <p class="stat" id="stat"></p>
 </div></section>
@@ -148,13 +138,19 @@ td.tp{font-weight:800;white-space:nowrap}
 <div class="sh"><span class="dot"></span><h2>Topics</h2></div>
 <p>Counting the current assignment gives each topic's probability for every word (β).</p>
 <div class="cards" id="topicCards"></div>
-<p class="note">The model only numbers the topics. What a topic is about is our reading of its word list.</p>
+</div></section>
+
+<section class="band" id="vocab"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>Vocabulary</h2></div>
+<p>How the instances of each word are split across topics.</p>
+<div class="vocab" id="vocabList"></div>
 </div></section>
 
 <section class="band" id="mixes"><div class="wrap">
 <div class="sh"><span class="dot"></span><h2>Topic mixes</h2></div>
-<p>Counting it per document gives each document's topic mix (θ).</p>
+<p>Counting the assignment per document gives each document's topic mix (θ).</p>
 <div id="mixList"></div>
+<p class="small" id="mixNote">Not quite 100%: α adds a little to every topic, so no share is ever exactly zero.</p>
 </div></section>
 
 <script>
@@ -162,8 +158,9 @@ td.tp{font-weight:800;white-space:nowrap}
 const EX=["The players kicked the ball into the goal.","A late goal won the match for the players.","The ball hit the post and the match ended.","The telescope found a new star in the galaxy.","A planet circles a star at the edge of the galaxy.","After the match, the players watched a star and a planet."];
 const STOP=["a","an","the","is","of","to","on","for","and","in","into","at","by","with","this","that","it","its","my","our","after","as","from","was","were","be","are","has","have","had","we","they","he","she","his","her","their"];
 const ALPHA=0.1,ETA=0.01,FIRST=3,RUNS=200;
-const COL=["var(--t0)","var(--t1)","var(--t2)"];
-let docs=EX.slice(),V=[],W=[],TOK=[],K=2,Z=[],ndk=[],nkw=[],nk=[],seed=FIRST,rng=null,ptr=0,pass=0,lastChanged=null,calc=null,cur=null,timer=null;
+const COL=["var(--t0)","var(--t1)"];
+const K=2;
+let docs=EX.slice(),V=[],W=[],TOK=[],Z=[],ndk=[],nkw=[],nk=[],seed=FIRST,rng=null,ptr=0,pass=0,lastChanged=null,calc=null,cur=null,timer=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const tok=s=>(s.toLowerCase().match(/[a-z]+/g)||[]).filter(w=>!STOP.includes(w));
@@ -217,7 +214,7 @@ function stop(){clearInterval(timer);timer=null;$("run").textContent=`Repeat ${R
 
 function render(msg){
   if(msg!==undefined)$("status").textContent=msg;
-  drawAssign();drawCalc();drawTopics();drawMixes();
+  drawAssign();drawCalc();drawTopics();drawVocab();drawMixes();
   $("stat").textContent=!TOK.length?"":`Passes over the corpus so far: ${pass}.`+(lastChanged===null?"":` Words that changed topic in the last pass: ${lastChanged}.`);
 }
 function drawAssign(){
@@ -225,7 +222,8 @@ function drawAssign(){
   $("assignDocs").innerHTML=W.map((ws,d)=>`<div class="arow"><span class="dl">d${d+1}</span><div class="wchips">${ws.length?ws.map((w,n)=>`<button type="button" class="w${cur&&cur[0]===d&&cur[1]===n?" cur":""}" data-d="${d}" data-n="${n}" style="--c:${COL[Z[d][n]]}" aria-label="${esc(V[w])}, topic ${Z[d][n]+1}">${esc(V[w])}</button>`).join(""):'<span class="empty">No words left</span>'}</div></div>`).join("");
 }
 function drawCalc(){
-  if(!calc){$("calc").innerHTML=`<p class="ph">${TOK.length?"Press Re-guess one word, or click any word, to see how its new topic is drawn.":""}</p>`;return}
+  $("calc").hidden=!calc;
+  if(!calc){$("calc").innerHTML="";return}
   const {d,w,old,neu,rows}=calc,word=esc(V[w]);
   $("calc").innerHTML=`<h3>Re-guessing '${word}' in d${d+1}</h3>
   <p class="small" style="margin:0">It was topic ${old+1}. Forget that, and for each topic count:</p>
@@ -245,6 +243,12 @@ function drawTopics(){
     <p class="small" style="margin:0">${pl(nk[k],"word instance")}</p>
     <p class="sub">Most likely words</p><div class="bars">${b.length?bars(b,m,COL[k]):'<p class="small">No words in this topic right now.</p>'}</div></div>`;
   }).join("");
+}
+function drawVocab(){
+  if(!TOK.length){$("vocabList").innerHTML="";return}
+  const n=V.map((_,i)=>nkw.map(r=>r[i])),tot=n.map(r=>r.reduce((a,b)=>a+b,0));
+  const order=V.map((_,i)=>i).sort((a,b)=>tot[b]-tot[a]||V[a].localeCompare(V[b]));
+  $("vocabList").innerHTML=order.map(i=>`<div class="vrow"><span class="vw">${esc(V[i])}</span><div class="stack" role="img" aria-label="${esc(V[i])}: ${n[i].map((c,k)=>`${c} in topic ${k+1}`).join(", ")}">${n[i].map((c,k)=>c?`<span class="seg2" style="width:${(100*c/tot[i]).toFixed(1)}%;--c:${COL[k]}">${c}</span>`:"").join("")}</div></div>`).join("");
 }
 function drawMixes(){
   if(!TOK.length){$("mixList").innerHTML="";return}
@@ -275,7 +279,6 @@ $("run").onclick=()=>{
 };
 $("rand").onclick=()=>start((Math.random()*2147483646|0)+1);
 $("reset").onclick=()=>start(FIRST);
-document.querySelectorAll('input[name=k]').forEach(r=>r.addEventListener("change",()=>{K=+r.value;start(seed)}));
 $("resetDocs").onclick=()=>{docs=EX.slice();buildDocs();compute();start(FIRST)};
 buildDocs();compute();start(FIRST);
 }
