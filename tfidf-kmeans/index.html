@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TF-IDF and k-means</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday teaching tool, calm and exact
+   IDEA a metro line: four stations from sentences to cluster words
+   PICTURE the live k-means map with centroids moving, plus the matrices it works on
+   COLOUR white ground, ink black, line colours blue / red / amber for clusters, green for the matrix
+   TYPE Figtree 800 for headings, Figtree for text
+   LAYOUT stacked bands, one per station; map and distance table side by side above 860px, stacked below */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1116);--ink:light-dark(#111111,#eef0f3);--soft:light-dark(#5b6068,#a3a9b3);--rule:light-dark(#e3e5e8,#262b33);--panel:light-dark(#f5f6f8,#161a21);--line:light-dark(#00a05a,#2bc27e);--c0:light-dark(#0a5cff,#5b93ff);--c1:light-dark(#e6261f,#ff6a5f);--c2:light-dark(#d99a00,#ffc53d)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Figtree,system-ui,sans-serif;overflow-x:clip}
+h1,h2{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0}
+h1{font-size:clamp(32px,5vw,48px);text-wrap:balance}
+h2{font-size:clamp(24px,3vw,30px)}
+p{margin:.4em 0;max-width:70ch}
+.band{padding:clamp(24px,4vw,48px) max(5vw,16px);border-top:1px solid var(--rule)}
+.wrap{max-width:1240px;margin:0 auto}
+.metro{display:flex;flex-wrap:wrap;gap:0;margin-top:22px;position:relative}
+.metro a{flex:1 1 140px;position:relative;padding:30px 8px 0 0;color:var(--ink);text-decoration:none;font-weight:600}
+.metro a::before{content:"";position:absolute;left:0;right:0;top:9px;height:6px;background:var(--line)}
+.metro a::after{content:"";position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;background:var(--bg);border:5px solid var(--line)}
+.metro a:last-child::before{right:auto;width:20px}
+.metro a:hover{text-decoration:underline}
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.dot{width:20px;height:20px;border-radius:50%;border:5px solid var(--line);flex:none}
+button,.seg label{font:600 15px Figtree,system-ui,sans-serif;min-height:44px;padding:0 16px;border-radius:8px;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer}
+button:hover{background:var(--panel)}
+button:focus-visible,.seg input:focus-visible+span,input[type=text]:focus-visible{outline:3px solid var(--c0);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden}
+.seg label{border:0;border-radius:0;display:flex;align-items:center;padding:0;min-height:42px}
+.seg label+label{border-left:1.5px solid var(--ink)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{padding:0 14px;display:flex;align-items:center;height:100%}
+.seg input:checked+span{background:var(--ink);color:var(--bg)}
+.docs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.doc{background:var(--panel);border-radius:10px;padding:12px}
+.doc label{font-weight:800;font-size:14px}
+.doc input{width:100%;font:16px Figtree,system-ui,sans-serif;padding:9px 10px;border:1.5px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink);margin:6px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;min-height:26px}
+.chip{font-size:13px;padding:2px 9px;border-radius:99px;background:var(--bg);border:1px solid var(--rule)}
+.empty{font-size:13px;color:var(--soft)}
+.small{font-size:14px;color:var(--soft)}
+.scroll{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--bg);font-weight:800}
+thead th{font-weight:600;color:var(--soft)}
+tr.idf td{background:light-dark(#e4e6ea,#2a303a);color:var(--soft)}
+tr.idf td:first-child{background:light-dark(#e4e6ea,#2a303a)}
+.formula{font-size:15px;background:var(--panel);border-radius:8px;padding:10px 12px;margin-top:10px;max-width:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;margin-top:8px}
+.fig{position:relative;min-height:360px;background:var(--panel);border-radius:10px}
+.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+svg text{paint-order:stroke;stroke:var(--panel);stroke-width:4px;font:600 14px Figtree,system-ui,sans-serif}
+#status{font-size:18px;font-weight:600;min-height:56px;margin:6px 0}
+.near{font-weight:800;outline:2px solid currentColor;outline-offset:-2px;border-radius:4px}
+.stat{font-size:15px;margin-top:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;margin-top:12px}
+.card{border:1.5px solid var(--rule);border-radius:12px;padding:14px 16px}
+.card h3{margin:0 0 4px;font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px}
+.swatch{width:16px;height:16px;border-radius:50%;flex:none}
+.bars{margin:6px 0 12px}
+.bar{display:grid;grid-template-columns:6.5em minmax(0,1fr) 3.2em;gap:8px;align-items:center;font-size:15px;margin:3px 0}
+.bar .t{height:14px;border-radius:3px}
+.bar .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--soft)}
+.sub{font-weight:600;font-size:15px;margin-top:8px}
+.note{background:var(--panel);border-radius:8px;padding:10px 12px;font-size:15px;margin-top:10px}
+@media(max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}.docs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.metro a{flex:1 1 0;font-size:14px;line-height:1.25}}
+@media(max-width:560px){.docs{grid-template-columns:minmax(0,1fr)}.fig{min-height:300px}th,td{padding:6px 5px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="band" style="border-top:0">
+<div class="wrap">
+<h1>TF-IDF and k-means</h1>
+<nav class="metro" aria-label="Steps">
+<a href="#docs">Documents</a><a href="#tfidf">TF-IDF matrix</a><a href="#kmeans">k-means</a><a href="#words">Words per cluster</a>
+</nav>
+</div>
+</header>
+
+<section class="band" id="docs"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>Documents</h2></div>
+<p>Each sentence is lowercased, split into words, and stripped of stop words.</p>
+<div class="docs" id="docList"></div>
+<div class="row"><button id="resetDocs" type="button">Restore example sentences</button></div>
+</div></section>
+
+<section class="band" id="tfidf"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>TF-IDF matrix</h2></div>
+<p>Rows = documents; columns = words. Switch between the three stages to see how the numbers are built.</p>
+<div class="row">
+<div class="seg" role="radiogroup" aria-label="Matrix stage">
+<label><input type="radio" name="mode" value="tf" id="m-tf"><span>Word counts</span></label>
+<label><input type="radio" name="mode" value="tfidf" id="m-tfidf"><span>Counts × IDF</span></label>
+<label><input type="radio" name="mode" value="norm" id="m-norm" checked><span>Normalised rows</span></label>
+</div>
+</div>
+<p class="formula" id="formula"></p>
+<div class="scroll"><table id="matrix"></table></div>
+</div></section>
+
+<section class="band" id="kmeans"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>k-means clustering</h2></div>
+<p>Each document is now a point with one coordinate per word. k-means repeats two steps: assign every document to its nearest centroid, then move every centroid to the average of its documents.</p>
+<div class="row">
+<button id="next" type="button">Next step</button>
+<button id="run" type="button">Run to the end</button>
+<button id="rand" type="button">New random start</button>
+<button id="reset" type="button">Back to the first start</button>
+</div>
+<p id="status" aria-live="polite"></p>
+<div class="grid2">
+<div><div class="fig"><svg id="map" role="img" aria-label="Documents and centroids on a two-dimensional map"></svg></div>
+<p class="small">The map squeezes all word dimensions into two just for display. Distances are computed in the full space.</p></div>
+<div><div class="scroll" style="margin-top:0"><table id="dist"></table></div>
+<p class="stat" id="inertia"></p>
+</div>
+</div>
+<p class="sub" style="margin-top:18px">Centroids: the average row of each cluster</p>
+<div class="scroll"><table id="cents"></table></div>
+</div></section>
+
+<section class="band" id="words"><div class="wrap">
+<div class="sh"><span class="dot"></span><h2>From centroids to words</h2></div>
+<p>A centroid has one weight per word, so sorting it gives a ranked word list. The highest weights are the most typical words. Subtracting the average document first keeps only the words that set this cluster apart.</p>
+<p class="note" id="wordsNote"></p>
+<div class="cards" id="wordCards"></div>
+</div></section>
+
+
+<script>
+{
+const EX=["My car has a new engine.","Driving my car to work.","Self-driving car on the road.","Chess is a game of strategy.","The chess champion won the game.","A driving game for kids."];
+const STOP=["a","an","the","is","of","to","on","for","and","in","my","has","it","at","by","with","this","that"];
+const NAMES=["A","B","C"],COL=["var(--c0)","var(--c1)","var(--c2)"];
+const FIRST={2:[1,5]};
+let docs=EX.slice(),V=[],X=[],TF=[],IDF=[],TI=[],K=2,cents=[],prev=null,lab=[],phase="init",round=0,seed=11,timer=null,proj=null;
+const $=id=>document.getElementById(id);
+const fmt=v=>v===0?"0":v.toFixed(2);
+const tok=s=>(s.toLowerCase().match(/[a-z]+/g)||[]).filter(w=>!STOP.includes(w));
+const d2=(a,b)=>a.reduce((s,v,i)=>s+(v-b[i])**2,0);
+const mean=rows=>rows[0].map((_,i)=>rows.reduce((s,r)=>s+r[i],0)/rows.length);
+
+function buildDocs(){
+  $("docList").innerHTML=docs.map((d,i)=>`<div class="doc"><label for="doc${i}">d${i+1}</label><input type="text" id="doc${i}" value="${d.replace(/"/g,"&quot;")}"><div class="chips" id="chips${i}"></div></div>`).join("");
+  docs.forEach((_,i)=>$("doc"+i).addEventListener("input",e=>{docs[i]=e.target.value;compute();resetKM(false)}));
+}
+function compute(){
+  const T=docs.map(tok);
+  T.forEach((t,i)=>{$("chips"+i).innerHTML=t.length?t.map(w=>`<span class="chip">${w}</span>`).join(""):'<span class="empty">No words left</span>'});
+  V=[...new Set(T.flat())].sort();
+  const N=docs.length;
+  TF=T.map(t=>V.map(w=>t.filter(x=>x===w).length));
+  IDF=V.map((w,j)=>{const df=TF.filter(r=>r[j]>0).length;return Math.log((1+N)/(1+df))+1});
+  TI=TF.map(r=>r.map((c,j)=>c*IDF[j]));
+  X=TI.map(r=>{const n=Math.hypot(...r);return n?r.map(v=>v/n):r.slice()});
+  drawMatrix();
+}
+function heat(v,max,col){const p=max?Math.round(70*v/max):0;return p?`background:color-mix(in srgb,${col} ${p}%,transparent)`:""}
+function drawMatrix(){
+  const mode=document.querySelector('input[name=mode]:checked').value;
+  const M=mode==="tf"?TF:mode==="tfidf"?TI:X;
+  const max=Math.max(...M.flat(),0.0001);
+  const f=mode==="tf"?(v=>String(v)):fmt;
+  let h=`<thead><tr><th>doc</th>${V.map(w=>`<th scope="col">${w}</th>`).join("")}</tr></thead><tbody>`;
+  if(mode!=="norm")h+=`<tr class="idf"><td>idf</td>${IDF.map(v=>`<td>${v.toFixed(2)}</td>`).join("")}</tr>`;
+  h+=M.map((r,i)=>`<tr><td>d${i+1}</td>${r.map(v=>`<td style="${heat(v,max,"var(--line)")}">${f(v)}</td>`).join("")}</tr>`).join("")+"</tbody>";
+  $("matrix").innerHTML=V.length?h:"<tbody><tr><td>No words in any document yet.</td></tr></tbody>";
+  $("formula").innerHTML=mode==="tf"?"How often each word occurs in each document. The grey row is the word's IDF, used in the next stage: idf = ln((1 + N) / (1 + df)) + 1, with N = 6 documents and df = the number of documents containing the word. Rare words get a higher IDF."
+   :mode==="tfidf"?"Each count multiplied by its word's IDF, so words that appear in many documents count for less."
+   :"Each row divided by its length, so that long documents don't dominate. These rows are the points k-means clusters.";
+}
+function pca(){
+  const n=X.length,m=mean(X),C=X.map(r=>r.map((v,i)=>v-m[i])),d=V.length;
+  const cov=[...Array(d)].map((_,a)=>[...Array(d)].map((_,b)=>C.reduce((s,r)=>s+r[a]*r[b],0)));
+  const comps=[];
+  for(let c=0;c<2;c++){let v=V.map((_,i)=>Math.sin(i*7.1+c*3.3+1));for(let it=0;it<200;it++){let w=cov.map(row=>row.reduce((s,x,i)=>s+x*v[i],0));comps.forEach(p=>{const dot=w.reduce((s,x,i)=>s+x*p[i],0);w=w.map((x,i)=>x-dot*p[i])});const nn=Math.hypot(...w);if(!nn)break;v=w.map(x=>x/nn)}comps.push(v)}
+  proj=r=>comps.map(p=>r.reduce((s,x,i)=>s+(x-m[i])*p[i],0));
+}
+function resetKM(rand){
+  clearInterval(timer);
+  if(!V.length){cents=[];lab=docs.map(()=>-1);phase="init";draw("Type some words into the documents first.");return}
+  let idx;
+  if(rand){idx=[];while(idx.length<K){seed=seed*16807%2147483647;const j=seed%docs.length;if(!idx.includes(j))idx.push(j)}}
+  else idx=FIRST[K];
+  cents=idx.map(i=>X[i].slice());lab=docs.map(()=>-1);prev=null;phase="init";round=0;pca();
+  draw(`Start: the ${K} centroids are placed on documents ${idx.map(i=>"d"+(i+1)).join(" and ")}. No document belongs to a cluster yet.`);
+}
+function inertia(){return lab[0]<0?null:X.reduce((s,r,i)=>s+d2(r,cents[lab[i]]),0)}
+function step(){
+  if(phase==="done"||!cents.length)return;
+  if(phase==="init"||phase==="updated"){
+    let ch=0;X.forEach((r,i)=>{let b=0,bd=Infinity;cents.forEach((c,j)=>{const d=d2(r,c);if(d<bd-1e-12){bd=d;b=j}});if(b!==lab[i]){ch++;lab[i]=b}});
+    round++;prev=null;
+    if(ch===0&&phase==="updated"){phase="done";draw("Done: no document changed cluster, so the centroids won't move again.");return}
+    phase="assigned";draw(`Round ${round}, assign: every document joins its nearest centroid. ${ch} document${ch===1?"":"s"} changed cluster.`);
+  }else{
+    prev=cents.map(c=>c.slice());
+    cents=cents.map((c,j)=>{const m=X.filter((_,i)=>lab[i]===j);return m.length?mean(m):c});
+    phase="updated";draw(`Round ${round}, update: every centroid moves to the average of its documents.`);
+  }
+}
+function draw(msg){
+  $("status").textContent=msg;
+  const I=inertia();
+  $("inertia").textContent=I===null?"Total squared distance (inertia): not computed until the first assignment.":`Total squared distance (inertia): ${I.toFixed(3)}. Lower means tighter clusters.`;
+  drawMap();drawDist();drawCents();drawWords();
+}
+const ro=new ResizeObserver(()=>drawMap());ro.observe($("map"));
+function drawMap(){
+  const s=$("map"),W=s.clientWidth,H=s.clientHeight;
+  if(!W||!proj||!cents.length){s.innerHTML="";return}
+  const P=X.map(proj),Q=cents.map(proj),R=prev?prev.map(proj):[],all=P.concat(Q,R);
+  const xs=all.map(p=>p[0]),ys=all.map(p=>p[1]),pad=46;
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const sx=v=>pad+(x1-x0?(v-x0)/(x1-x0):.5)*(W-2*pad),sy=v=>pad+(y1-y0?(v-y0)/(y1-y0):.5)*(H-2*pad);
+  let h="";
+  if(phase==="assigned"||phase==="done")P.forEach((p,i)=>{const q=Q[lab[i]];h+=`<line x1="${sx(p[0])}" y1="${sy(p[1])}" x2="${sx(q[0])}" y2="${sy(q[1])}" stroke="${COL[lab[i]]}" stroke-width="1.5" opacity=".4"/>`});
+  R.forEach((r,j)=>{h+=`<line x1="${sx(r[0])}" y1="${sy(r[1])}" x2="${sx(Q[j][0])}" y2="${sy(Q[j][1])}" stroke="${COL[j]}" stroke-width="2.5" stroke-dasharray="5 5"/><circle cx="${sx(r[0])}" cy="${sy(r[1])}" r="9" fill="none" stroke="${COL[j]}" stroke-width="2" opacity=".5"/>`});
+  const placed=[];
+  P.map((p,i)=>[sx(p[0]),sy(p[1]),i]).sort((a,b)=>a[1]-b[1]).forEach(([x,y,i])=>{let ly=y+5;placed.forEach(q=>{if(Math.abs(q[0]-x)<44&&Math.abs(q[1]-ly)<17)ly=q[1]+17});placed.push([x,ly]);const c=lab[i]<0?"var(--soft)":COL[lab[i]];h+=`<circle cx="${x}" cy="${y}" r="8" fill="${c}"/><text x="${x+12}" y="${ly}" fill="var(--ink)">d${i+1}</text>`});
+  Q.forEach((q,j)=>{const x=sx(q[0]),y=sy(q[1]);h+=`<rect x="${x-11}" y="${y-11}" width="22" height="22" rx="4" fill="${COL[j]}" stroke="var(--panel)" stroke-width="3" transform="rotate(45 ${x} ${y})"/><text x="${x}" y="${y-18}" text-anchor="middle" fill="${COL[j]}">${NAMES[j]}</text>`});
+  s.innerHTML=h;
+}
+function drawDist(){
+  if(!cents.length){$("dist").innerHTML="";return}
+  let h=`<thead><tr><th>doc</th>${cents.map((_,j)=>`<th scope="col" style="color:${COL[j]}">to ${NAMES[j]}</th>`).join("")}<th scope="col">cluster</th></tr></thead><tbody>`;
+  X.forEach((r,i)=>{const ds=cents.map(c=>d2(r,c));const show=lab[i]>=0;h+=`<tr><td>d${i+1}</td>${ds.map((d,j)=>`<td class="${show&&lab[i]===j?"near":""}" style="${show&&lab[i]===j?"color:"+COL[j]:""}">${d.toFixed(2)}</td>`).join("")}<td style="color:${show?COL[lab[i]]:"var(--soft)"};font-weight:800">${show?NAMES[lab[i]]:"–"}</td></tr>`});
+  $("dist").innerHTML=h+"</tbody>";
+}
+function drawCents(){
+  if(!cents.length){$("cents").innerHTML="";return}
+  const max=Math.max(...cents.flat(),0.0001);
+  $("cents").innerHTML=`<thead><tr><th>centroid</th>${V.map(w=>`<th scope="col">${w}</th>`).join("")}</tr></thead><tbody>`+cents.map((c,j)=>`<tr><td style="color:${COL[j]}">${NAMES[j]}</td>${c.map(v=>`<td style="${heat(v,max,COL[j])}">${fmt(v)}</td>`).join("")}</tr>`).join("")+"</tbody>";
+}
+function bars(list,max,col,plus){return list.map(([w,v])=>`<div class="bar"><span>${w}</span><span class="t" style="width:${Math.max(2,100*Math.abs(v)/max)}%;background:${col}"></span><span class="v">${(plus&&v>0?"+":"")+v.toFixed(2)}</span></div>`).join("")}
+function drawWords(){
+  if(!cents.length){$("wordCards").innerHTML="";$("wordsNote").textContent="";return}
+  $("wordsNote").textContent="These lists come from the current centroids and change as k-means runs. Press Run to the end to see the final lists.";
+  $("wordsNote").hidden=phase==="done";
+  const avg=mean(X);
+  $("wordCards").innerHTML=cents.map((c,j)=>{
+    const members=lab.map((l,i)=>l===j?"d"+(i+1):null).filter(Boolean);
+    const typ=V.map((w,i)=>[w,c[i]]).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    const diff=V.map((w,i)=>[w,c[i]-avg[i]]).sort((a,b)=>b[1]-a[1]);
+    const top=diff.filter(d=>d[1]>0.0005).slice(0,4);
+    const m1=Math.max(...typ.map(t=>t[1]),0.0001),m2=Math.max(...diff.map(d=>Math.abs(d[1])),0.0001);
+    return `<div class="card"><h3><span class="swatch" style="background:${COL[j]}"></span>Cluster ${NAMES[j]}</h3>
+    <p class="small" style="margin:0">N = ${members.length}${members.length?" ("+members.join(", ")+")":""}</p>
+    <p class="sub">Typical: highest weight in the centroid</p><div class="bars">${bars(typ,m1,COL[j])}</div>
+    <p class="sub">Distinctive: centroid minus the average document</p><div class="bars">${top.length?bars(top,m2,COL[j],true):'<p class="small">No word is above average yet.</p>'}</div>
+    ${(()=>{const dr=typ.filter(t=>!top.some(d=>d[0]===t[0])).map(t=>t[0]);return dr.length?`<p class="small" style="color:var(--ink)">Typical but not distinctive: <b>${dr.join(", ")}</b>, because ${dr.length>1?"they are":"it is"} also common in other clusters.</p>`:""})()}
+</div>`;
+  }).join("");
+}
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener("change",drawMatrix));
+$("next").onclick=()=>{clearInterval(timer);step()};
+$("run").onclick=()=>{clearInterval(timer);if(phase==="done")return;timer=setInterval(()=>{step();if(phase==="done")clearInterval(timer)},650)};
+$("rand").onclick=()=>resetKM(true);
+$("reset").onclick=()=>resetKM(false);
+$("resetDocs").onclick=()=>{docs=EX.slice();buildDocs();compute();resetKM(false)};
+buildDocs();compute();resetKM(false);
+}
+</script>
+</body>
+</html>
