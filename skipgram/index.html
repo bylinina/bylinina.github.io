@@ -231,7 +231,8 @@ function drawMap(){
   P.map((p,i)=>[sx(p[0]),sy(p[1]),i]).sort((a,b)=>a[1]-b[1]).forEach(([x,y,i])=>{
     let ly=y+5;placed.forEach(q=>{if(Math.abs(q[0]-x)<72&&Math.abs(q[1]-ly)<19)ly=q[1]+19});placed.push([x,ly]);
     const isT=last&&i===last.t,col=isT?"var(--pos)":"var(--ink)";
-    h+=`<circle cx="${x}" cy="${y}" r="${isT?8:6}" fill="${col}"/><text x="${x+11}" y="${ly}" fill="${col}">${esc(V[i])}</text>`;
+    const flip=x+11+V[i].length*9.5>Wd-8;
+    h+=`<circle cx="${x}" cy="${y}" r="${isT?8:6}" fill="${col}"/><text x="${flip?x-11:x+11}" y="${ly}" text-anchor="${flip?"end":"start"}" fill="${col}">${esc(V[i])}</text>`;
   });
   s.innerHTML=h;
 }
