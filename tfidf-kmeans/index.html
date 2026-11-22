@@ -256,7 +256,7 @@ function drawWords(){
   const avg=mean(X);
   $("wordCards").innerHTML=cents.map((c,j)=>{
     const members=lab.map((l,i)=>l===j?"d"+(i+1):null).filter(Boolean);
-    const typ=V.map((w,i)=>[w,c[i]]).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    const typ=V.map((w,i)=>[w,c[i]]).filter(t=>t[1]>0.0005).sort((a,b)=>b[1]-a[1]).slice(0,4);
     const diff=V.map((w,i)=>[w,c[i]-avg[i]]).sort((a,b)=>b[1]-a[1]);
     const top=diff.filter(d=>d[1]>0.0005).slice(0,4);
     const m1=Math.max(...typ.map(t=>t[1]),0.0001),m2=Math.max(...diff.map(d=>Math.abs(d[1])),0.0001);
